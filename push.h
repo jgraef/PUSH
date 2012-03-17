@@ -211,12 +211,13 @@ push_val_t *push_code_peek(push_code_t *code);
 push_val_t *push_code_peek_nth(push_code_t *code, int n);
 int push_code_length(push_code_t *code);
 void push_code_flush(push_code_t *code);
+push_code_t *push_code_dup_ext(push_code_t *code, GList *first_link, GList *last_link);
 push_code_t *push_code_dup(push_code_t *code);
 push_bool_t push_code_equal(push_code_t *code1, push_code_t *code2);
 push_code_t *push_code_concat(push_code_t *code1, push_code_t *code2);
 push_code_t *push_code_container(push_code_t *haystack, push_val_t *needle);
 int push_code_discrepancy(push_code_t *code1, push_code_t *code2);
-push_val_t *push_code_extract(push_code_t *code, int point);
+push_val_t *push_code_extract(push_code_t *code, push_int_t point);
 int push_code_index(push_code_t *haystack, push_val_t *needle);
 int push_code_size(push_code_t *code);
 push_code_t *push_code_replace(push_code_t *_code, push_int_t i, push_val_t *val);
@@ -251,6 +252,7 @@ void push_add_dis(push_t *push);
 
 #define g_return_if_null(ptr) g_return_if_fail(ptr != NULL)
 #define g_return_val_if_null(ptr, val) g_return_val_if_fail(ptr != NULL, val)
+
 
 
 #endif /* _PUSH_PUSH_H_ */

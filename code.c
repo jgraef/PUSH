@@ -82,22 +82,33 @@ void push_code_foreach(push_code_t *code, GFunc func, void *userdata) {
 
 
 /* duplicate code */
-static void push_code_dup_val(push_val_t *val, push_code_t *new_code) {
-  push_code_append(new_code, val);
-}
-
-push_code_t *push_code_dup(push_code_t *code) {
+push_code_t *push_code_dup_ext(push_code_t *code, GList *first_link, GList *last_link) {
   push_code_t *new_code;
+  GList *link;
 
   g_return_val_if_null(code, NULL);
 
   new_code = push_code_new();
 
-  g_queue_foreach(code, (GFunc)push_code_dup_val, new_code);
+  if (first_link == NULL) {
+    first_link = code->head;
+  }
+
+  for (link = first_link; link != NULL; link = link->next) {
+    push_code_append(new_code, (push_val_t*)link->data);
+
+    if (link == last_link) {
+      break;
+    }
+  }
 
   return new_code;
 }
 
+
+push_code_t *push_code_dup(push_code_t *code) {
+  return push_code_dup_ext(code, NULL, NULL);
+}
 
 
 push_bool_t push_code_equal(push_code_t *code1, push_code_t *code2) {
@@ -137,17 +148,26 @@ push_code_t *push_code_concat(push_code_t *_code1, push_code_t *_code2) {
   code1 = push_code_dup(_code1);
   code2 = push_code_dup(_code2);
 
-  code1->tail->next = code2->head;
-  code2->head->prev = code1->tail;
-  code1->tail = code2->tail;
-  code1->length += code2->length;
-  code2->head = NULL;
-  code2->tail = NULL;
+  if (code2->head != NULL && code2->tail != NULL) {
+    if (code1->head == NULL && code1->tail == NULL) {
+      push_code_destroy(code1);
+      return code2;
+    }
+    else {
+      code1->tail->next = code2->head;
+      code2->head->prev = code1->tail;
+      code1->tail = code2->tail;
+      code1->length += code2->length;
+      code2->length = 0;
+      code2->head = NULL;
+      code2->tail = NULL;
+    }
+  }
 
   push_code_destroy(code2);
-
   return code1;
 }
+
 
 /* Returns the sub-code in haystack which contains the needle
  * NOTE: Definition from http://hampshire.edu/lspector/push3-description.html
@@ -159,12 +179,6 @@ push_code_t *push_code_concat(push_code_t *_code1, push_code_t *_code2) {
  *       ( A ) ) ( D ( A ) ) )" and the second piece of code is "( A )" then
  *       this pushes ( C ( A ) ). Pushes an empty list if there is no such
  *       container. 
- * TODO: I hope this bunch of recursion works. But better test it! I think
- *       this can be done more elegantly with a stack. Then I could also remove
- *       the container from the list that contains the container (if there is a
- *       container containing list), and I wouldn't have to dup the container.
- *       But for the moment this is enough! My brain hurts! I Should smoke a
- *       joint!
  */
 struct push_code_container_args {
   push_val_t *needle;
@@ -179,20 +193,20 @@ static int push_code_container_find(push_val_t *val, struct push_code_container_
   g_return_val_if_null(val, 1);
 
   if (push_val_equal(val, args->needle)) {
-    // found needle, stop search so push_code_container_finger can return the finger
+    /* found needle, stop search so push_code_container_finger can return the finger */
     return 0;
   }
-  else if (!push_check_code(val)) {
+  else if (push_check_code(val)) {
     // this is a sub-code, search it
     finger = push_code_container(val->code, needle);
     if (finger != NULL) {
-      // recursive call found container, pass finger and stop search
+      /* recursive call found container, pass finger and stop search */
       args->finger = finger;
       return 0;
     }
   }
 
-  // nothing found, go to next element
+  /* nothing found, go to next element */
   return 1;
 }
 
@@ -211,7 +225,6 @@ push_code_t *push_code_container(push_code_t *haystack, push_val_t *needle) {
 }
 
 
-
 /* Calculate discrepancy of both lists */
 int push_code_discrepancy(push_code_t *code1, push_code_t *code2) {
   // TODO
@@ -219,8 +232,7 @@ int push_code_discrepancy(push_code_t *code1, push_code_t *code2) {
 }
 
 
-/* removes element indexed by point from code and returns it
- */
+/* removes element indexed by point from code and returns it */
 struct push_code_extract_args {
   int point;
   push_val_t *val;
@@ -235,23 +247,28 @@ static int push_code_extract_find(push_val_t *val, struct push_code_extract_args
     return 0;
   }
   else if (push_check_code(val)) {
+    args->point--;
+
     /* descend on sub-code */
     if (g_queue_find_custom(val->code, args, (GCompareFunc)push_code_extract_find) != NULL) {
       /* found element in sub-code, return it */
       return 0;
     }
   }
+  else {
+    args->point--;
+  }
 
-  /* go to next element */
-  args->point--;
   return 1;
 }
 
-push_val_t *push_code_extract(push_code_t *code, int point) {
+push_val_t *push_code_extract(push_code_t *code, push_int_t point) {
   struct push_code_extract_args args = {
     .point = point,
     .val = NULL
   };
+
+  g_return_val_if_fail(point >= 0, NULL);
 
   g_queue_find_custom(code, &args, (GCompareFunc)push_code_extract_find);
 

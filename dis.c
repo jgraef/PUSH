@@ -289,14 +289,9 @@ static void push_instr_code_cons(push_t *push, void *userdata) {
 static void push_instr_code_container(push_t *push, void *userdata) {
   push_val_t *val1, *val2;
 
-  g_debug("%s: FIXME", __func__);
-  return;
-
   if (CH(push->code, 2)) {
     val1 = push_stack_pop_code(push);;
     val2 = push_stack_pop(push->code);
-
-    g_debug("val1 = 0x%lx, val2 = 0x%lx", (long)val1, (long)val2);
 
     push_stack_push_new(push, push->code, PUSH_TYPE_CODE, push_code_container(val1->code, val2));
   }
@@ -305,14 +300,9 @@ static void push_instr_code_container(push_t *push, void *userdata) {
 static void push_instr_code_contains(push_t *push, void *userdata) {
   push_val_t *val1, *val2;
 
-  g_debug("%s: FIXME", __func__);
-  return;
-
   if (CH(push->code, 2)) {
     val1 = push_stack_pop_code(push);
     val2 = push_stack_pop(push->code);
-
-    g_debug("val1 = 0x%lx, val2 = 0x%lx", (long)val1, (long)val2);
 
     push_stack_push_new(push, push->boolean, PUSH_TYPE_BOOL, push_code_container(val1->code, val2) != NULL);
   }
@@ -374,13 +364,13 @@ static void push_instr_code_do_count(push_t *push, void *userdata) {
 
     if (val2->integer > 0) {
       /* construct ( 0 <1 - IntegerArg> CODE.QUOTE <CodeArg> CODE.DO*RANGE ) */
-      code = g_queue_new();
-      g_queue_push_tail(code, push_val_new(push, PUSH_TYPE_INT, 0));
+      code = push_code_new();
+      push_code_append(code, push_val_new(push, PUSH_TYPE_INT, 0));
       val2->integer = 1 - val2->integer;
-      g_queue_push_tail(code, val2);
-      g_queue_push_tail(code, push_val_new(push, PUSH_TYPE_INSTR, push_instr_lookup(push, "CODE.QUOTE")));
-      g_queue_push_tail(code, val1);
-      g_queue_push_tail(code, push_val_new(push, PUSH_TYPE_INSTR, push_instr_lookup(push, "CODE.DO*RANGE")));
+      push_code_append(code, val2);
+      push_code_append(code, push_val_new(push, PUSH_TYPE_INSTR, push_instr_lookup(push, "CODE.QUOTE")));
+      push_code_append(code, val1);
+      push_code_append(code, push_val_new(push, PUSH_TYPE_INSTR, push_instr_lookup(push, "CODE.DO*RANGE")));
 
       /* push generated code */
       push_stack_push_new(push, push->exec, PUSH_TYPE_CODE, code);
@@ -403,13 +393,13 @@ static void push_instr_code_do_range(push_t *push, void *userdata) {
 
     if (val2->integer != val3->integer) {
       /* push recursive call to DO*RANGE: (<DestIndex> <CurrentIndex+-1> CODE.QUOTE <CodeArg> CODE.DO*RANGE ) */
-      code = g_queue_new();
-      g_queue_push_tail(code, val2);
+      code = push_code_new();
+      push_code_append(code, val2);
       step = val2->integer > val3->integer ? 1 : -1;
-      g_queue_push_tail(code, push_val_new(push, PUSH_TYPE_INT, val3->integer + step));
-      g_queue_push_tail(code, push_val_new(push, PUSH_TYPE_INSTR, push_instr_lookup(push, "CODE.QUOTE")));
-      g_queue_push_tail(code, val1);
-      g_queue_push_tail(code, push_val_new(push, PUSH_TYPE_INSTR, push_instr_lookup(push, "CODE.DO*RANGE")));
+      push_code_append(code, push_val_new(push, PUSH_TYPE_INT, val3->integer + step));
+      push_code_append(code, push_val_new(push, PUSH_TYPE_INSTR, push_instr_lookup(push, "CODE.QUOTE")));
+      push_code_append(code, val1);
+      push_code_append(code, push_val_new(push, PUSH_TYPE_INSTR, push_instr_lookup(push, "CODE.DO*RANGE")));
       push_stack_push_new(push, push->exec, PUSH_TYPE_CODE, code);
     }
 
@@ -428,14 +418,13 @@ static void push_instr_code_do_times(push_t *push, void *userdata) {
 
     if (val2->integer > 0) {
       /* construct ( 0 <1 - IntegerArg> CODE.QUOTE INT.POP::<CodeArg> CODE.DO*RANGE ) */
-      code = g_queue_new();
-      g_queue_push_tail(code, push_val_new(push, PUSH_TYPE_INT, 0));
-      val2->integer = 1 - val2->integer;
-      g_queue_push_tail(code, val2);
-      g_queue_push_tail(code, push_val_new(push, PUSH_TYPE_INSTR, push_instr_lookup(push, "CODE.QUOTE")));
-      g_queue_push_head(val1->code, push_val_new(push, PUSH_TYPE_INSTR, push_instr_lookup(push, "INT.POP")));
-      g_queue_push_tail(code, val1);
-      g_queue_push_tail(code, push_val_new(push, PUSH_TYPE_INSTR, push_instr_lookup(push, "CODE.DO*RANGE")));
+      code = push_code_new();
+      push_code_append(code, push_val_new(push, PUSH_TYPE_INT, 0));
+      push_code_append(code, push_val_new(push, PUSH_TYPE_INT, val2->integer - 1));
+      push_code_append(code, push_val_new(push, PUSH_TYPE_INSTR, push_instr_lookup(push, "CODE.QUOTE")));
+      push_code_prepend(push_code_dup(val1->code), push_val_new(push, PUSH_TYPE_INSTR, push_instr_lookup(push, "INT.POP")));
+      push_code_append(code, val1);
+      push_code_append(code, push_val_new(push, PUSH_TYPE_INSTR, push_instr_lookup(push, "CODE.DO*RANGE")));
 
       /* push generated code */
       push_stack_push_new(push, push->exec, PUSH_TYPE_CODE, code);
@@ -445,15 +434,25 @@ static void push_instr_code_do_times(push_t *push, void *userdata) {
 
 static void push_instr_code_extract(push_t *push, void *userdata) {
   push_val_t *val1, *val2;
-
-  g_debug("%s: FIXME", __func__);
-  return;
+  push_int_t p;
 
   if (CH(push->code, 1) && CH(push->integer, 1)) {
-    val1 = push_stack_pop_code(push);
+    val1 = push_stack_pop(push->code);
     val2 = push_stack_pop(push->integer);
-    
-    push_stack_push(push->code, push_code_extract(val1->code, val2->integer));
+
+    if (push_check_code(val1) && push_code_size(val1->code) > 0) {
+      p = MOD(val2->integer, push_code_size(val1->code));
+    }
+    else {
+      p = 0;
+    }
+
+    if (p == 0) {
+      push_stack_push(push->code, val1);
+    }
+    else {
+      push_stack_push(push->code, push_code_extract(val1->code, p - 1));
+    }
   }
 }
 
@@ -526,11 +525,11 @@ static void push_instr_code_instructions(push_t *push, void *userdata) {
   GHashTableIter iter;
   push_instr_t *instr;
 
-  list = g_queue_new();
+  list = push_code_new();
   g_hash_table_iter_init(&iter, push->instructions);
 
   while (g_hash_table_iter_next(&iter, NULL, (void*)&instr)) {
-    g_queue_push_tail(list, push_val_new(push, PUSH_TYPE_INSTR, instr));
+    push_code_append(list, push_val_new(push, PUSH_TYPE_INSTR, instr));
   }
 
   push_stack_push_new(push, push->code, PUSH_TYPE_CODE, list);
@@ -554,9 +553,9 @@ static void push_instr_code_list(push_t *push, void *userdata) {
     val1 = push_stack_pop(push->code);
     val2 = push_stack_pop(push->code);
 
-    list = g_queue_new();
-    g_queue_push_tail(list, val1);
-    g_queue_push_tail(list, val2);
+    list = push_code_new();
+    push_code_append(list, val1);
+    push_code_append(list, val2);
 
     push_stack_push_new(push, push->code, PUSH_TYPE_CODE, list);
   }
@@ -584,7 +583,7 @@ static void push_instr_code_nth(push_t *push, void *userdata) {
     val2 = push_stack_pop_code(push);
 
     if (val2->code->length > 0) {
-      push_stack_push_new(push, push->code, PUSH_TYPE_CODE, g_queue_pop_nth(val2->code, MOD(val1->integer, val2->code->length)));
+      push_stack_push(push->code, push_code_pop_nth(val2->code, MOD(val1->integer, val2->code->length)));
     }
   }
 }
@@ -592,32 +591,19 @@ static void push_instr_code_nth(push_t *push, void *userdata) {
 static void push_instr_code_nthcdr(push_t *push, void *userdata) {
   push_val_t *val1, *val2;
   GList *link;
-  push_code_t *list;
   int n;
-
-  g_debug("%s: FIXME", __func__);
-  return;
 
   if (CH(push->code, 1) && CH(push->integer, 1)) {
     val1 = push_stack_pop(push->integer);
     val2 = push_stack_pop_code(push);
 
-    g_debug("val1 = 0x%lx, val2 = 0x%lx", (long)val1, (long)val2);
+    if (push_code_length(val2->code) > 0) {
+      n = MOD(val1->integer, push_code_length(val2->code));
 
-    if (val2->code->length > 0) {
-      /* get nth link and split queue there */
-      n = MOD(val1->integer, val2->code->length);
-      link = g_queue_pop_nth_link(val2->code, n);
-      list = g_queue_new();
-      list->head = link;
-      list->tail = val2->code->tail;
-      val2->code->tail = link->prev;
-      list->head->prev = NULL;
-      val2->code->tail->next = NULL;
-      list->length = val2->code->length - n;
-      val2->code->length = n;
-
-      push_stack_push_new(push, push->code, PUSH_TYPE_CODE, list);
+      if (n > 0) {
+        link = g_queue_peek_nth_link(val2->code, n);
+        push_stack_push_new(push, push->code, PUSH_TYPE_CODE, push_code_dup_ext(val2->code, link, NULL));
+      }
     }
     else {
       push_stack_push(push->code, val2);
@@ -697,12 +683,12 @@ static void push_instr_exec_do_count(push_t *push, void *userdata) {
 
     if (val2->integer > 0) {
       /* construct ( 0 <1 - IntegerArg> EXEC.DO*RANGE <ExecArg> ) */
-      code = g_queue_new();
-      g_queue_push_tail(code, push_val_new(push, PUSH_TYPE_INT, 0));
+      code = push_code_new();
+      push_code_append(code, push_val_new(push, PUSH_TYPE_INT, 0));
       val2->integer = 1 - val2->integer;
-      g_queue_push_tail(code, val2);
-      g_queue_push_tail(code, push_val_new(push, PUSH_TYPE_INSTR, push_instr_lookup(push, "EXEC.DO*RANGE")));
-      g_queue_push_tail(code, val1);
+      push_code_append(code, val2);
+      push_code_append(code, push_val_new(push, PUSH_TYPE_INSTR, push_instr_lookup(push, "EXEC.DO*RANGE")));
+      push_code_append(code, val1);
 
       /* push generated code */
       push_stack_push_new(push, push->exec, PUSH_TYPE_CODE, code);
@@ -726,7 +712,7 @@ static void push_instr_exec_do_range(push_t *push, void *userdata) {
     if (val2->integer != val3->integer) {
       /* push recursive call to EXEC.DO*RANGE: (<DestIndex> <CurrentIndex+-1> EXEC.DO*RANGE <EXECArg> ) */
       code = push_code_new();
-      g_queue_push_tail(code, val2);
+      push_code_append(code, val2);
       step = val2->integer > val3->integer ? 1 : -1;
       push_code_append(code, push_val_new(push, PUSH_TYPE_INT, val3->integer + step));
       push_code_append(code, push_val_new(push, PUSH_TYPE_INSTR, push_instr_lookup(push, "EXEC.DO*RANGE")));
@@ -749,13 +735,12 @@ static void push_instr_exec_do_times(push_t *push, void *userdata) {
 
     if (val2->integer > 0) {
       /* construct ( 0 <1 - IntegerArg> EXEC.DO*RANGE INT.POP::<CodeArg> ) */
-      code = g_queue_new();
-      g_queue_push_tail(code, push_val_new(push, PUSH_TYPE_INT, 0));
-      val2->integer = 1 - val2->integer;
-      g_queue_push_tail(code, val2);
-      g_queue_push_tail(code, push_val_new(push, PUSH_TYPE_INSTR, push_instr_lookup(push, "EXEC.DO*RANGE")));
-      g_queue_push_head(val1->code, push_val_new(push, PUSH_TYPE_INSTR, push_instr_lookup(push, "INT.POP")));
-      g_queue_push_tail(code, val1);
+      code = push_code_new();
+      push_code_append(code, push_val_new(push, PUSH_TYPE_INT, 0));
+      push_code_append(code, push_val_new(push, PUSH_TYPE_INT, val2->integer - 1));
+      push_code_append(code, push_val_new(push, PUSH_TYPE_INSTR, push_instr_lookup(push, "EXEC.DO*RANGE")));
+      push_code_prepend(push_code_dup(val1->code), push_val_new(push, PUSH_TYPE_INSTR, push_instr_lookup(push, "INT.POP")));
+      push_code_append(code, val1);
 
       /* push generated code */
       push_stack_push_new(push, push->exec, PUSH_TYPE_CODE, code);

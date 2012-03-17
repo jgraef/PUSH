@@ -29,8 +29,8 @@ push_instr_t *push_instr_lookup(push_t *push, const char *name) {
 void push_call_instr(push_t *push, push_instr_t *instr) {
   g_return_if_null(instr);
 
-  g_debug("%s: instr=0x%lx, name=%s, func=0x%lx, userdata=0x%lx", __func__, (long)instr, instr->name, (long)instr->func, (long)instr->userdata);
+  //g_debug("%s: instr=%p, name=%s, func=%p, userdata=%p", __func__, instr, instr->name, instr->func, instr->userdata);
   instr->func(push, instr->userdata);
-  g_debug("%s: done", __func__);
+  //g_debug("%s: done", __func__);
 }
 

@@ -53,12 +53,12 @@ push_t *push_new(void) {
   push->instructions = g_hash_table_new_full(NULL, NULL, NULL, (GDestroyNotify)push_destroy_instr);
 
   /* initialize stacks */
-  push->boolean = g_queue_new();
-  push->code = g_queue_new();
-  push->exec = g_queue_new();
-  push->integer = g_queue_new();
-  push->name = g_queue_new();
-  push->real = g_queue_new();
+  push->boolean = push_stack_new();
+  push->code = push_stack_new();
+  push->exec = push_stack_new();
+  push->integer = push_stack_new();
+  push->name = push_stack_new();
+  push->real = push_stack_new();
 
   /* initialize random number generator */
   push->rand = g_rand_new();
@@ -98,12 +98,12 @@ void push_destroy(push_t *push) {
   push_gc_destroy(push);
 
   /* destroy stacks */
-  g_queue_free(push->boolean);
-  g_queue_free(push->code);
-  g_queue_free(push->exec);
-  g_queue_free(push->integer);
-  g_queue_free(push->name);
-  g_queue_free(push->real);
+  push_stack_destroy(push->boolean);
+  push_stack_destroy(push->code);
+  push_stack_destroy(push->exec);
+  push_stack_destroy(push->integer);
+  push_stack_destroy(push->name);
+  push_stack_destroy(push->real);
 
   /* destroy instruction hash table */
   g_hash_table_destroy(push->instructions);
@@ -157,8 +157,6 @@ void push_do_val(push_t *push, push_val_t *val) {
 
   g_return_if_null(push);
 
-  //g_debug("%s: val=0x%lx, type=%d", __func__, (long)val, val->type);
-
   switch (val->type) {
     case PUSH_TYPE_BOOL:
       push_stack_push(push->boolean, val);
@@ -168,9 +166,6 @@ void push_do_val(push_t *push, push_val_t *val) {
       g_return_if_null(val);
 
       /* push all values of code object onto exec stack in reverse order */
-      /*while ((val2 = g_queue_pop_tail(val->code)) != NULL) {
-        push_stack_push(push->exec, val2);
-      }*/
       push_code_push_elements(val->code, push->exec);
       break;
 

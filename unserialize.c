@@ -90,10 +90,10 @@ static void push_unserialize_add_value(struct push_unserialize_parser *parser, p
 
   if (parser->val_stack != NULL) {
     val2 = (push_val_t*)parser->val_stack->data;
-    g_queue_push_tail(val2->code, val);
+    push_code_append(val2->code, val);
   }
   else if (parser->current_stack != NULL) {
-    g_queue_push_tail(parser->current_stack, val);
+    push_code_append(parser->current_stack, val);
   }
   else if (parser->current_binding != NULL) {
     push_define(parser->push, parser->current_binding, val);

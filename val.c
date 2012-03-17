@@ -77,8 +77,7 @@ void push_val_destroy(push_val_t *val) {
   g_return_if_null(val);
 
   if (push_check_code(val)) {
-    /* NOTE: Destroying elements is done by garbage collector */
-    g_queue_free(val->code);
+    push_code_destroy(val->code);
   }
 
   g_slice_free(push_val_t, val);
