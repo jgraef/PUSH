@@ -1,0 +1,19 @@
+PUSH - A fast C implementation of the genetic programming language PUSH
+
+This PUSH implementation is written in pure C (except Python wrapper) and uses
+GLib for Code lists and Stacks (also for Hashtables and some other things).
+
+Performance (tested on AMD 64 Athlon 3500 + AMD Athlon(tm) 64 Processor 3500+):
+About 1 million PUSH instructions per second
+
+Program exchange format:
+This PUSH implementation uses XML to store and load interpreter states.
+
+Python:
+push.py includes classes Interpreter, Process and VM, where Interpreter is a
+basic wrapper of the C interfaces with automatic value conversion and Process
+and VM build a simple virtual machine where multiple PUSH programs can be run
+at once.
+
+Contact:
+If you have any problems or questions, contact me via janosch.graef@gmx.net
