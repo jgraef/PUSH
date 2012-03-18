@@ -1,5 +1,4 @@
-/* stack.c - Stacks
- * NOTE: Just wrappers for the GLib GQueue functions
+/* gc.h - A simple mark-and-sweep garbage collector for Push values
  *
  * Copyright (c) 2012 Janosch Gräf <janosch.graef@gmx.net>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -21,53 +20,21 @@
  * IN THE SOFTWARE.
  */
 
-#include <glib.h>
-
-#include "push.h"
-
+#ifndef _PUSH_GC_H_
+#define _PUSH_GC_H_
 
 
-push_stack_t *push_stack_new(void) {
-  return g_queue_new();
-}
+#include "push/types.h"
+#include "push/interpreter.h"
 
-void push_stack_destroy(push_stack_t *stack) {
-  g_queue_free(stack);
-}
 
-void push_stack_push(push_stack_t *stack, push_val_t *val) {
-  g_return_if_null(val);
+#define PUSH_GC_INTERVAL 1024
 
-  g_queue_push_head(stack, val);
-}
 
-void push_stack_push_nth(push_stack_t *stack, push_int_t n, push_val_t *val) {
-  g_return_if_null(val);
+void push_gc_init(push_t *push);
+void push_gc_destroy(push_t *push);
+void push_gc_collect(push_t *push, push_bool_t force);
 
-  g_queue_push_nth(stack, val, n);
-}
 
-push_val_t *push_stack_pop(push_stack_t *stack) {
-  return (push_val_t*)g_queue_pop_head(stack);
-}
-
-push_val_t *push_stack_pop_nth(push_stack_t *stack, push_int_t n) {
-  return (push_val_t*)g_queue_pop_nth(stack, n);
-}
-
-push_val_t *push_stack_peek(push_stack_t *stack) {
-  return (push_val_t*)g_queue_peek_head(stack);
-}
-
-push_val_t *push_stack_peek_nth(push_stack_t *stack, push_int_t n) {
-  return (push_val_t*)g_queue_peek_nth(stack, n);
-}
-
-int push_stack_length(push_stack_t *stack) {
-  return stack->length;
-}
-
-void push_stack_flush(push_stack_t *stack) {
-  g_queue_clear(stack);
-}
+#endif /* _PUSH_GC_H_ */
 

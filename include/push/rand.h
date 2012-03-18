@@ -1,5 +1,4 @@
-/* stack.c - Stacks
- * NOTE: Just wrappers for the GLib GQueue functions
+/* rand.h - Generating random PUSH values
  *
  * Copyright (c) 2012 Janosch Gräf <janosch.graef@gmx.net>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -21,53 +20,25 @@
  * IN THE SOFTWARE.
  */
 
-#include <glib.h>
-
-#include "push.h"
-
+#ifndef _PUSH_RAND_H_
+#define _PUSH_RAND_H_
 
 
-push_stack_t *push_stack_new(void) {
-  return g_queue_new();
-}
+#include "push/types.h"
+#include "push/interpreter.h"
+#include "push/val.h"
 
-void push_stack_destroy(push_stack_t *stack) {
-  g_queue_free(stack);
-}
 
-void push_stack_push(push_stack_t *stack, push_val_t *val) {
-  g_return_if_null(val);
+void push_rand_set_seed(push_t *push, int seed);
+push_bool_t push_rand_bool(push_t *push);
+push_code_t *push_rand_code(push_t *push, push_int_t *size, push_bool_t force_size);
+push_int_t push_rand_int(push_t *push);
+push_instr_t *push_rand_instr(push_t *push);
+push_name_t push_rand_name(push_t *push);
+push_name_t push_rand_bound_name(push_t *push);
+push_real_t push_rand_real(push_t *push);
+push_val_t *push_rand_val(push_t *push, int type, push_int_t *size, push_bool_t force_size);
 
-  g_queue_push_head(stack, val);
-}
 
-void push_stack_push_nth(push_stack_t *stack, push_int_t n, push_val_t *val) {
-  g_return_if_null(val);
-
-  g_queue_push_nth(stack, val, n);
-}
-
-push_val_t *push_stack_pop(push_stack_t *stack) {
-  return (push_val_t*)g_queue_pop_head(stack);
-}
-
-push_val_t *push_stack_pop_nth(push_stack_t *stack, push_int_t n) {
-  return (push_val_t*)g_queue_pop_nth(stack, n);
-}
-
-push_val_t *push_stack_peek(push_stack_t *stack) {
-  return (push_val_t*)g_queue_peek_head(stack);
-}
-
-push_val_t *push_stack_peek_nth(push_stack_t *stack, push_int_t n) {
-  return (push_val_t*)g_queue_peek_nth(stack, n);
-}
-
-int push_stack_length(push_stack_t *stack) {
-  return stack->length;
-}
-
-void push_stack_flush(push_stack_t *stack) {
-  g_queue_clear(stack);
-}
+#endif /* _PUSH_RAND_H_ */
 

@@ -1,4 +1,4 @@
-/* val.c - Implementation of dynamically-typed PUSH values
+/* val.c - Dynamically-typed PUSH values
  *
  * Copyright (c) 2012 Janosch Gräf <janosch.graef@gmx.net>
  * Permission is hereby granted, free of charge, to any person obtaining a copy

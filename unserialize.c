@@ -1,4 +1,4 @@
-/* unserialize.c - Unserialize XML representation
+/* unserialize.c - Unserialize PUSH objects
  * NOTE: uses the expat library
  *
  * Copyright (c) 2012 Janosch Gräf <janosch.graef@gmx.net>

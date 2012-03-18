@@ -74,7 +74,7 @@ void push_gc_destroy(push_t *push) {
 }
 
 
-void push_gc_collect(push_t *push, int force) {
+void push_gc_collect(push_t *push, push_bool_t force) {
   GList *link, *next_link;
 
   g_return_if_null(push);

@@ -1,4 +1,4 @@
-/* code.c - Implementation of the code data type
+/* code.c - The code datatype
  *
  * Copyright (c) 2012 Janosch Gräf <janosch.graef@gmx.net>
  * Permission is hereby granted, free of charge, to any person obtaining a copy

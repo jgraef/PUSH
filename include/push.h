@@ -1,5 +1,4 @@
-/* stack.c - Stacks
- * NOTE: Just wrappers for the GLib GQueue functions
+/* push.h - Include everything
  *
  * Copyright (c) 2012 Janosch Gräf <janosch.graef@gmx.net>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -19,55 +18,42 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
+ *
+ *
+ * TODO: - Replace usages of standard C types (e.g. int) with PUSH basic types (e.g. push_int_t)
+ *       - Beim Laden von DIS überprüfen ob die Instruktion per Config geladen werden soll
+ *       - Stack size limits
+ *       - Don't intern config keys
+ *       - Load from config: random seed/state, NEW-ERC-NAME-PROPABILITY
  */
 
-#include <glib.h>
-
-#include "push.h"
-
+#ifndef _PUSH_H_
+#define _PUSH_H_
 
 
-push_stack_t *push_stack_new(void) {
-  return g_queue_new();
-}
+/* Include all header files */
+#include "push/code.h"
+#include "push/config.h"
+#include "push/gc.h"
+#include "push/instr.h"
+#include "push/rand.h"
+#include "push/serialize.h"
+#include "push/stack.h"
+#include "push/types.h"
+#include "push/unserialize.h"
+#include "push/val.h"
 
-void push_stack_destroy(push_stack_t *stack) {
-  g_queue_free(stack);
-}
 
-void push_stack_push(push_stack_t *stack, push_val_t *val) {
-  g_return_if_null(val);
+#define PUSH_VERSION 0
 
-  g_queue_push_head(stack, val);
-}
+#define g_return_if_null(ptr) g_return_if_fail(ptr != NULL)
+#define g_return_val_if_null(ptr, val) g_return_val_if_fail(ptr != NULL, val)
 
-void push_stack_push_nth(push_stack_t *stack, push_int_t n, push_val_t *val) {
-  g_return_if_null(val);
 
-  g_queue_push_nth(stack, val, n);
-}
 
-push_val_t *push_stack_pop(push_stack_t *stack) {
-  return (push_val_t*)g_queue_pop_head(stack);
-}
+void push_add_dis(push_t *push);
+int push_version(void);
 
-push_val_t *push_stack_pop_nth(push_stack_t *stack, push_int_t n) {
-  return (push_val_t*)g_queue_pop_nth(stack, n);
-}
 
-push_val_t *push_stack_peek(push_stack_t *stack) {
-  return (push_val_t*)g_queue_peek_head(stack);
-}
-
-push_val_t *push_stack_peek_nth(push_stack_t *stack, push_int_t n) {
-  return (push_val_t*)g_queue_peek_nth(stack, n);
-}
-
-int push_stack_length(push_stack_t *stack) {
-  return stack->length;
-}
-
-void push_stack_flush(push_stack_t *stack) {
-  g_queue_clear(stack);
-}
+#endif /* _PUSH_H_ */
 

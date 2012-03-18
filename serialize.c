@@ -1,5 +1,4 @@
-/* serialize.c - Generates a serialized representation (XML) of a PUSH
- * interpreter state.
+/* serialize.c - Serializing PUSH objects
  *
  * Copyright (c) 2012 Janosch Gräf <janosch.graef@gmx.net>
  * Permission is hereby granted, free of charge, to any person obtaining a copy

@@ -1,4 +1,4 @@
-/* interpreter.c - Implementation of the PUSH interpreter
+/* interpreter.c - The PUSH interpreter
  *
  * Copyright (c) 2012 Janosch Gräf <janosch.graef@gmx.net>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -24,11 +24,6 @@
 
 #include "push.h"
 
-
-
-int push_version(void) {
-  return PUSH_VERSION;
-}
 
 static push_destroy_instr(push_instr_t *instr) {
   g_slice_free(push_instr_t, instr);

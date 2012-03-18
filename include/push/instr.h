@@ -1,5 +1,4 @@
-/* stack.c - Stacks
- * NOTE: Just wrappers for the GLib GQueue functions
+/* instr.h - Instruction datatype
  *
  * Copyright (c) 2012 Janosch Gräf <janosch.graef@gmx.net>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -21,53 +20,33 @@
  * IN THE SOFTWARE.
  */
 
-#include <glib.h>
-
-#include "push.h"
-
+#ifndef _PUSH_INSTR_H_
+#define _PUSH_INSTR_H_
 
 
-push_stack_t *push_stack_new(void) {
-  return g_queue_new();
-}
+typedef struct push_instr_S push_instr_t;
 
-void push_stack_destroy(push_stack_t *stack) {
-  g_queue_free(stack);
-}
 
-void push_stack_push(push_stack_t *stack, push_val_t *val) {
-  g_return_if_null(val);
+#include "push/types.h"
+#include "push/interpreter.h"
 
-  g_queue_push_head(stack, val);
-}
 
-void push_stack_push_nth(push_stack_t *stack, push_int_t n, push_val_t *val) {
-  g_return_if_null(val);
+/* Instruction handler function type */
+typedef void (*push_instr_func_t)(push_t *push, void *userdata);
 
-  g_queue_push_nth(stack, val, n);
-}
 
-push_val_t *push_stack_pop(push_stack_t *stack) {
-  return (push_val_t*)g_queue_pop_head(stack);
-}
+/* Instruction type */
+struct push_instr_S {
+  push_name_t name;
+  push_instr_func_t func;
+  void *userdata;
+};
 
-push_val_t *push_stack_pop_nth(push_stack_t *stack, push_int_t n) {
-  return (push_val_t*)g_queue_pop_nth(stack, n);
-}
 
-push_val_t *push_stack_peek(push_stack_t *stack) {
-  return (push_val_t*)g_queue_peek_head(stack);
-}
+void push_instr_reg(push_t *push, const char *name, push_instr_func_t func, void *userdata);
+push_instr_t *push_instr_lookup(push_t *push, const char *name);
+void push_instr_call(push_t *push, push_instr_t *instr);
 
-push_val_t *push_stack_peek_nth(push_stack_t *stack, push_int_t n) {
-  return (push_val_t*)g_queue_peek_nth(stack, n);
-}
 
-int push_stack_length(push_stack_t *stack) {
-  return stack->length;
-}
-
-void push_stack_flush(push_stack_t *stack) {
-  g_queue_clear(stack);
-}
+#endif /* _PUSH_INSTR_H_ */
 
