@@ -2,7 +2,7 @@ CFLAGS = -I include/ `pkg-config glib-2.0 --cflags` -fPIC -DXML_NS -DXML_DTD -DX
 #CFLAGS = -I include/ `pkg-config glib-2.0 --cflags` -fPIC -DXML_NS -DXML_DTD -DXML_BYTE_ORDER=12 -O0 -g
 LDFLAGS = -lm `pkg-config glib-2.0 --libs` -lexpat
 
-SRC = code.c config.c dis.c gc.c instr.c interpreter.c rand.c serialize.c stack.c unserialize.c val.c
+SRC = code.c config.c dis.c gc.c instr.c interpreter.c rand.c push.c serialize.c stack.c unserialize.c val.c
 OBJ = $(SRC:%.c=%.o)
 DEPENDFILE = .depend
 PREFIX = /usr/local
