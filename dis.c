@@ -31,7 +31,7 @@
 
 
 /* MOD in the LISP sense */
-#define MOD(n, M)              ((n % M) + M) % M
+#define MOD(n, M)              (((n) % (M)) + (M)) % (M)
 
 /* check if stack has enough items */
 #define CH(stack, num)         (push_stack_length(stack) >= num)
@@ -514,9 +514,7 @@ static void push_instr_code_insert(push_t *push, void *userdata) {
     val2 = push_stack_pop(push->code);
     val3 = push_stack_pop(push->integer);
 
-    code = push_code_replace(val1->code, MOD(val3->integer, (push_code_size(val1->code) + 1)), val2);
-
-    push_stack_push_new(push, push->code, PUSH_TYPE_CODE, code);
+    push_stack_push(push->code, push_code_replace(push, val1->code, MOD(val3->integer, push_code_size(val1->code) + 1), val2));
   }
 }
 
@@ -602,7 +600,7 @@ static void push_instr_code_nthcdr(push_t *push, void *userdata) {
 
       if (n > 0) {
         link = g_queue_peek_nth_link(val2->code, n);
-        push_stack_push_new(push, push->code, PUSH_TYPE_CODE, push_code_dup_ext(val2->code, link, NULL));
+        push_stack_push_new(push, push->code, PUSH_TYPE_CODE, push_code_dup_ext(val2->code, link, NULL, NULL, NULL));
       }
     }
     else {

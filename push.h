@@ -211,7 +211,7 @@ push_val_t *push_code_peek(push_code_t *code);
 push_val_t *push_code_peek_nth(push_code_t *code, int n);
 int push_code_length(push_code_t *code);
 void push_code_flush(push_code_t *code);
-push_code_t *push_code_dup_ext(push_code_t *code, GList *first_link, GList *last_link);
+push_code_t *push_code_dup_ext(push_code_t *code, GList *first_link, GList *last_link, GList *replace_link, push_val_t *replace_with);
 push_code_t *push_code_dup(push_code_t *code);
 push_bool_t push_code_equal(push_code_t *code1, push_code_t *code2);
 push_code_t *push_code_concat(push_code_t *code1, push_code_t *code2);
@@ -220,7 +220,7 @@ int push_code_discrepancy(push_code_t *code1, push_code_t *code2);
 push_val_t *push_code_extract(push_code_t *code, push_int_t point);
 int push_code_index(push_code_t *haystack, push_val_t *needle);
 int push_code_size(push_code_t *code);
-push_code_t *push_code_replace(push_code_t *_code, push_int_t i, push_val_t *val);
+push_val_t *push_code_replace(push_t *push, push_code_t *code, push_int_t point, push_val_t *val);
 void push_code_push_elements(push_code_t *code, push_stack_t *stack);
 
 void push_serialize_val(GString *xml, int ident_count, push_val_t *val);

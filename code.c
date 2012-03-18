@@ -82,10 +82,12 @@ void push_code_foreach(push_code_t *code, GFunc func, void *userdata) {
 
 
 /* duplicate code */
-push_code_t *push_code_dup_ext(push_code_t *code, GList *first_link, GList *last_link) {
+push_code_t *push_code_dup_ext(push_code_t *code, GList *first_link, GList *last_link, GList *replace_link, push_val_t *replace_with) {
   push_code_t *new_code;
   GList *link;
+  push_val_t *val;
 
+  g_return_val_if_fail((replace_link == NULL && replace_with == NULL) || (replace_link != NULL && replace_with != NULL), NULL);
   g_return_val_if_null(code, NULL);
 
   new_code = push_code_new();
@@ -95,7 +97,8 @@ push_code_t *push_code_dup_ext(push_code_t *code, GList *first_link, GList *last
   }
 
   for (link = first_link; link != NULL; link = link->next) {
-    push_code_append(new_code, (push_val_t*)link->data);
+    val = link == replace_link ? replace_with : (push_val_t*)link->data;
+    push_code_append(new_code, val);
 
     if (link == last_link) {
       break;
@@ -107,7 +110,7 @@ push_code_t *push_code_dup_ext(push_code_t *code, GList *first_link, GList *last
 
 
 push_code_t *push_code_dup(push_code_t *code) {
-  return push_code_dup_ext(code, NULL, NULL);
+  return push_code_dup_ext(code, NULL, NULL, NULL, NULL);
 }
 
 
@@ -327,14 +330,66 @@ int push_code_size(push_code_t *code) {
 
 
 /* insert element */
-push_code_t *push_code_replace(push_code_t *_code, push_int_t i, push_val_t *val) {
-  push_code_t *code;
+struct push_code_replace_args {
+  push_t *push;
+  push_int_t point;
+  push_val_t *val;
+};
 
-  code = push_code_dup(_code);
+static int push_code_replace_find(push_val_t *val, struct push_code_replace_args *args) {
+  GList *link;
 
-  // TODO
+  g_return_val_if_null(val, 0);
 
-  return code;
+  if (args->point == 0) {
+    /* found element, return */
+    return 0;
+  }
+  else if (push_check_code(val)) {
+    args->point--;
+
+    /* descend on sub-code */
+    link = g_queue_find_custom(val->code, args, (GCompareFunc)push_code_replace_find);
+
+    if (link != NULL) {
+      /* found element in sub-code, copy code and replace element */
+      args->val = push_val_new(args->push, PUSH_TYPE_CODE, push_code_dup_ext(val->code, NULL, NULL, link, args->val));
+      
+      return 0;
+    }
+  }
+  else {
+    args->point--;
+  }
+
+  return 1;
+}
+
+push_val_t *push_code_replace(push_t *push, push_code_t *code, push_int_t point, push_val_t *val) {
+  struct push_code_replace_args args = {
+    .push = push,
+    .point = point - 1,
+    .val = val
+  };
+  GList *link;
+
+  g_return_val_if_null(val, NULL);
+  g_return_val_if_fail(point >= 0, NULL);
+
+  if (point == 0) {
+    /* replace whole code */
+    return val;
+  }
+
+  link = g_queue_find_custom(code, &args, (GCompareFunc)push_code_replace_find);
+
+  if (link != NULL) {
+    /* return new (code) value */
+    return push_val_new(push, PUSH_TYPE_CODE, push_code_dup_ext(code, NULL, NULL, link, args.val));
+  }
+  else {
+    return NULL;
+  }
 }
 
 
