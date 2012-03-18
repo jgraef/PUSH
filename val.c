@@ -66,8 +66,9 @@ push_val_t *push_val_new(push_t *push, int type, ...) {
   va_end(ap);
 
   /* add to garbage collection */
-  val->gc = push->gc.generation;
-  push->gc.values = g_list_prepend(push->gc.values, val);
+  if (push != NULL) {
+    push_gc_track(push, val);
+  }
 
   return val;
 }

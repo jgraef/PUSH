@@ -107,3 +107,13 @@ void push_gc_collect(push_t *push, push_bool_t force) {
 }
 
 
+void push_gc_track(push_t *push, push_val_t *val) {
+  val->gc = push->gc.generation;
+  push->gc.values = g_list_prepend(push->gc.values, val);
+}
+
+
+void push_gc_untrack(push_t *push, push_val_t *val) {
+  push->gc.values = g_list_remove(push->gc.values, val);
+}
+
