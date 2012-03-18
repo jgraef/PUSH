@@ -93,7 +93,7 @@ static void push_unserialize_add_value(struct push_unserialize_parser *parser, p
     push_code_append(val2->code, val);
   }
   else if (parser->current_stack != NULL) {
-    push_code_append(parser->current_stack, val);
+    g_queue_push_tail(parser->current_stack, val);
   }
   else if (parser->current_binding != NULL) {
     push_define(parser->push, parser->current_binding, val);
@@ -102,9 +102,8 @@ static void push_unserialize_add_value(struct push_unserialize_parser *parser, p
     push_config_set(parser->push, parser->current_config, val);
   }
   else {
-    // NOTE: should not happen; else free value
+    // NOTE: should not happen
     g_warning("Found unused value");
-    push_val_destroy(val);
   }
 }
 
