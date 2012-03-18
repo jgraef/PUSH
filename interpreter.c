@@ -241,7 +241,7 @@ push_bool_t push_done(push_t *push) {
 }
 
 
-/* NOTE: free returned string with g_free */
+/* NOTE: free returned string with g_free or push_free */
 char *push_dump_state(push_t *push) {
   GString *xml;
 

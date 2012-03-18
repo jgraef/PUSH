@@ -67,6 +67,9 @@ struct push_S {
   /* storage for interned strings */
   GStringChunk *names;
 
+  /* user data */
+  void *userdata;
+
   /* garbage collector */
   struct {
     int generation;
