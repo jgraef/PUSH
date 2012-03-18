@@ -1,5 +1,8 @@
 *.so
+*.o
 *.pyc
+.depend
+
 test
 test.c
 tests/
