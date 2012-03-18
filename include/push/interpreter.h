@@ -39,6 +39,10 @@ typedef struct push_S push_t;
 #define PUSH_NAME_STORAGE_BLOCK_SIZE 1024
 
 
+/* Interrupt handler type */
+typedef void (*push_interrupt_handler_t)(push_t *push, push_int_t interrupt_flag, void *userdata);
+
+
 /* Interpreter */
 struct push_S {
   /* stacks: push_val_t */
@@ -49,8 +53,9 @@ struct push_S {
   push_stack_t *name;
   push_stack_t *real;
 
-  /* Interrupt flag */
-  push_int_t interrupt;
+  /* Interrupt flag & handler */
+  push_int_t interrupt_flag;
+  push_interrupt_handler_t interrupt_handler;
 
   /* Interpreter configuration */
   GHashTable *config;
@@ -78,6 +83,7 @@ struct push_S {
 };
 
 
+push_t *push_new_full(push_interrupt_handler_t interrupt_handler);
 push_t *push_new(void);
 void push_destroy(push_t *push);
 push_name_t push_intern_name(push_t *push, const char *name);
@@ -92,6 +98,7 @@ push_bool_t push_done(push_t *push);
 char *push_dump_state(push_t *push);
 void push_free(void *ptr);
 void push_load_state(push_t *push, const char *xml);
+void push_interrupt(push_t *push, push_int_t interrupt_flag);
 
 
 #endif /* _PUSH_INTERPRETER_H_ */

@@ -30,21 +30,19 @@ static push_destroy_instr(push_instr_t *instr) {
 }
 
 
-push_t *push_new(void) {
+push_t *push_new_full(push_interrupt_handler_t interrupt_handler) {
   push_t *push;
 
   push = g_slice_new(push_t);
 
+  push->interrupt_handler = interrupt_handler;
+
   /* initialize garbage collection */
   push_gc_init(push);
 
-  /* initialize configuration */
+  /* create hash tables */
   push->config = g_hash_table_new(NULL, NULL);
-
-  /* create bindings hash table */
   push->bindings = g_hash_table_new(NULL, NULL);
-
-  /* create/link instructions hash table */
   push->instructions = g_hash_table_new_full(NULL, NULL, NULL, (GDestroyNotify)push_destroy_instr);
 
   /* initialize stacks */
@@ -71,6 +69,11 @@ push_t *push_new(void) {
   push_config_set(push, "MAX-POINTS-IN-RANDOM-EXPRESSIONS", push_val_new(push, PUSH_TYPE_INT, 100));
 
   return push;
+}
+
+
+push_t *push_new(void) {
+  return push_new_full(NULL);
 }
 
 
@@ -200,6 +203,9 @@ void push_do_val(push_t *push, push_val_t *val) {
 }
 
 
+/* Do one single step
+ * NOTE: Doesn't clear the interrupt flag
+ */
 push_bool_t push_step(push_t *push) {
   push_val_t *val;
 
@@ -209,6 +215,14 @@ push_bool_t push_step(push_t *push) {
   }
 
   push_gc_collect(push, PUSH_FALSE);
+
+  if (push->interrupt_flag != 0) {
+    /* call the interrupt handler */
+    if (push->interrupt_handler != NULL && push->interrupt_flag > 0) {
+      push->interrupt_handler(push, push->interrupt_flag, push->userdata);
+    }
+    return PUSH_FALSE;
+  }
 
   return val != NULL;
 }
@@ -220,17 +234,20 @@ push_int_t push_steps(push_t *push, push_int_t n) {
   g_return_if_null(push);
 
   /* clear interrupt flag */
-  push->interrupt = 0;
+  push->interrupt_flag = 0;
 
   /* do steps */
-  for (i = 0; i < n && push->interrupt == 0 && push_step(push); i++);
+  for (i = 0; i < n && push_step(push); i++);
 
   return i;
 }
 
 
 void push_run(push_t *push) {
-  while (push->interrupt == 0 && push_step(push));
+  /* clear interrupt flag */
+  push->interrupt_flag = 0;
+
+  while (push_step(push));
 }
 
 
@@ -238,6 +255,11 @@ push_bool_t push_done(push_t *push) {
   g_return_if_null(push);
 
   return push_stack_is_empty(push->exec);
+}
+
+
+void push_interrupt(push_t *push, push_int_t interrupt_flag) {
+  push->interrupt_flag = interrupt_flag;
 }
 
 
