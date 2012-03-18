@@ -409,7 +409,7 @@ static void push_instr_code_do_range(push_t *push, void *userdata) {
 }
 
 static void push_instr_code_do_times(push_t *push, void *userdata) {
-  push_val_t *val1, *val2;
+  push_val_t *val1, *val2, *val3;
   push_code_t *code;
 
   if (CH(push->code, 1) && CH(push->integer, 1)) {
@@ -422,8 +422,10 @@ static void push_instr_code_do_times(push_t *push, void *userdata) {
       push_code_append(code, push_val_new(push, PUSH_TYPE_INT, 0));
       push_code_append(code, push_val_new(push, PUSH_TYPE_INT, val2->integer - 1));
       push_code_append(code, push_val_new(push, PUSH_TYPE_INSTR, push_instr_lookup(push, "CODE.QUOTE")));
-      push_code_prepend(push_code_dup(val1->code), push_val_new(push, PUSH_TYPE_INSTR, push_instr_lookup(push, "INT.POP")));
-      push_code_append(code, val1);
+
+      val3 = push_val_new(push, PUSH_TYPE_CODE, push_code_dup(val1->code));
+      push_code_prepend(val3->code, push_val_new(push, PUSH_TYPE_INSTR, push_instr_lookup(push, "INT.POP")));
+      push_code_append(code, val3);
       push_code_append(code, push_val_new(push, PUSH_TYPE_INSTR, push_instr_lookup(push, "CODE.DO*RANGE")));
 
       /* push generated code */
@@ -724,7 +726,7 @@ static void push_instr_exec_do_range(push_t *push, void *userdata) {
 }
 
 static void push_instr_exec_do_times(push_t *push, void *userdata) {
-  push_val_t *val1, *val2;
+  push_val_t *val1, *val2, *val3;
   push_code_t *code;
 
   if (CH(push->exec, 1) && CH(push->integer, 1)) {
@@ -737,8 +739,9 @@ static void push_instr_exec_do_times(push_t *push, void *userdata) {
       push_code_append(code, push_val_new(push, PUSH_TYPE_INT, 0));
       push_code_append(code, push_val_new(push, PUSH_TYPE_INT, val2->integer - 1));
       push_code_append(code, push_val_new(push, PUSH_TYPE_INSTR, push_instr_lookup(push, "EXEC.DO*RANGE")));
-      push_code_prepend(push_code_dup(val1->code), push_val_new(push, PUSH_TYPE_INSTR, push_instr_lookup(push, "INT.POP")));
-      push_code_append(code, val1);
+      val3 = push_val_new(push, PUSH_TYPE_CODE, push_code_dup(val1->code));
+      push_code_prepend(val3->code, push_val_new(push, PUSH_TYPE_INSTR, push_instr_lookup(push, "INT.POP")));
+      push_code_append(code, val3);
 
       /* push generated code */
       push_stack_push_new(push, push->exec, PUSH_TYPE_CODE, code);

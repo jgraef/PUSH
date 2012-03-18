@@ -77,9 +77,6 @@ push_t *push_new(void) {
 void push_destroy(push_t *push) {
   g_return_if_null(push);
 
-  /* remove all bindings & destroy hash table */
-  g_hash_table_destroy(push->bindings);
-
   /* clear stacks */
   push_stack_flush(push->boolean);
   push_stack_flush(push->code);
@@ -87,6 +84,10 @@ void push_destroy(push_t *push) {
   push_stack_flush(push->integer);
   push_stack_flush(push->name);
   push_stack_flush(push->real);
+
+  /* clear hash tables */
+  g_hash_table_remove_all(push->bindings);
+  g_hash_table_remove_all(push->config);
 
   /* collect everything & destroy GC */
   push_gc_collect(push, PUSH_TRUE);
@@ -100,7 +101,9 @@ void push_destroy(push_t *push) {
   push_stack_destroy(push->name);
   push_stack_destroy(push->real);
 
-  /* destroy instruction hash table */
+  /* destroy hash tables */
+  g_hash_table_destroy(push->bindings);
+  g_hash_table_destroy(push->config);
   g_hash_table_destroy(push->instructions);
 
   /* destroy random number generator */
