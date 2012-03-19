@@ -40,9 +40,6 @@ void push_serialize_val(GString *xml, int ident_count, push_val_t *val) {
   ident_count++;
 
   switch (val->type) {
-    case PUSH_TYPE_NONE:
-      g_string_append_printf(xml, "%s<none />\n", ident);
-      break;
     case PUSH_TYPE_BOOL:
       g_string_append_printf(xml, "%s<bool value=\"%s\" />\n", ident, str_bool(val->boolean));
       break;
