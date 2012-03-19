@@ -84,6 +84,7 @@ push_t *push_new(void) {
 
 void push_destroy(push_t *push) {
   g_return_if_null(push);
+  g_return_if_fail(g_static_mutex_trylock(&push->mutex));
 
   /* clear stacks */
   push_stack_flush(push->boolean);

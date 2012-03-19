@@ -1,4 +1,4 @@
-/* push.h - Include everything
+/* vm.h - Multi-threaded execution of PUSH interpreters
  *
  * Copyright (c) 2012 Janosch Gräf <janosch.graef@gmx.net>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -18,42 +18,55 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
- *
- *
- * TODO: - Replace usages of standard C types (e.g. int) with PUSH basic types (e.g. push_int_t)
- *       - Beim Laden von DIS überprüfen ob die Instruktion per Config geladen werden soll
- *       - Stack size limits
- *       - Don't intern config keys
- *       - Load from config: random seed/state
  */
 
-#ifndef _PUSH_H_
-#define _PUSH_H_
+#ifndef _PUSH_VM_H_
+#define _PUSH_VM_H_
 
 
-/* Include all header files */
-#include "push/code.h"
-#include "push/gc.h"
-#include "push/instr.h"
-#include "push/rand.h"
-#include "push/serialize.h"
-#include "push/stack.h"
+#include <glib.h>
+
+
+typedef struct push_vm_S push_vm_t;
+
+
 #include "push/types.h"
-#include "push/unserialize.h"
-#include "push/val.h"
-#include "push/vm.h"
-
-
-#define PUSH_VERSION 0
-
-#define g_return_if_null(ptr) g_return_if_fail(ptr != NULL)
-#define g_return_val_if_null(ptr, val) g_return_val_if_fail(ptr != NULL, val)
+#include "push/interpreter.h"
 
 
 
-void push_add_dis(push_t *push);
-int push_version(void);
+#define PUSH_VM_INTERRUPT_KILL -1
 
 
-#endif /* _PUSH_H_ */
+typedef void (*push_vm_done_callback_t)(push_vm_t *vm, push_t *push);
+
+
+struct push_vm_S {
+  /* Processes: push_t */
+  GList *processes;
+
+  /* Thread pool for running processes */
+  GThreadPool *threads;
+
+  /* Max number of steps per process */
+  push_int_t max_steps;
+
+  /* Callback when process is done */
+  push_vm_done_callback_t done_callback;
+
+  /* Mutex */
+  GStaticMutex mutex;
+};
+
+
+push_vm_t *push_vm_new(push_int_t num_threads, push_int_t max_steps, push_vm_done_callback_t done_callback);
+void push_vm_destroy(push_vm_t *vm, push_bool_t kill_all);
+void push_vm_run(push_vm_t *vm, push_t *push);
+push_int_t push_vm_num_processes(push_vm_t *vm);
+push_int_t push_vm_num_queued(push_vm_t *vm);
+void push_vm_interrupt_all(push_vm_t *vm, push_int_t interrupt_flag);
+void push_vm_kill_all(push_vm_t *vm);
+
+
+#endif /* _PUSH_VM_H_ */
 

@@ -1,8 +1,8 @@
-CFLAGS = -I include/ `pkg-config glib-2.0 --cflags` -fPIC -DXML_NS -DXML_DTD -DXML_BYTE_ORDER=12 -O3 -ffast-math
-#CFLAGS = -I include/ `pkg-config glib-2.0 --cflags` -fPIC -DXML_NS -DXML_DTD -DXML_BYTE_ORDER=12 -O0 -g
-LDFLAGS = -lm `pkg-config glib-2.0 --libs` -lexpat
+CFLAGS = -I include/ `pkg-config glib-2.0 gthread-2.0 --cflags` -fPIC -DXML_NS -DXML_DTD -DXML_BYTE_ORDER=12 -O3 -ffast-math
+#CFLAGS = -I include/ `pkg-config glib-2.0 gthread-2.0 --cflags` -fPIC -DXML_NS -DXML_DTD -DXML_BYTE_ORDER=12 -O0 -g
+LDFLAGS = -lm `pkg-config glib-2.0 gthread-2.0 --libs` -lexpat
 
-SRC = code.c dis.c gc.c instr.c interpreter.c rand.c push.c serialize.c stack.c unserialize.c val.c
+SRC = code.c dis.c gc.c instr.c interpreter.c rand.c push.c serialize.c stack.c unserialize.c val.c vm.c
 OBJ = $(SRC:%.c=%.o)
 DEPENDFILE = .depend
 PREFIX = /usr/local
