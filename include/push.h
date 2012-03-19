@@ -21,10 +21,12 @@
  *
  *
  * TODO: - Replace usages of standard C types (e.g. int) with PUSH basic types (e.g. push_int_t)
+ *       - Replace PUSH_TRUE/FALSE with TRUE/FALSE
  *       - Beim Laden von DIS überprüfen ob die Instruktion per Config geladen werden soll
- *       - Stack size limits
- *       - Don't intern config keys
+ *       - Stack/code size limits
+ *       - Don't intern instruction names?
  *       - Load from config: random seed/state
+ *       - unserialize: Use GMarkup parser
  */
 
 #ifndef _PUSH_H_
