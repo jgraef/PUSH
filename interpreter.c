@@ -35,10 +35,14 @@ push_t *push_new_full(push_interrupt_handler_t interrupt_handler) {
 
   push = g_slice_new(push_t);
 
+  /* set interrupt handler */
   push->interrupt_handler = interrupt_handler;
 
   /* initialize garbage collection */
   push_gc_init(push);
+
+  /* initialize execution mutex */
+  g_static_mutex_init(&push->mutex);
 
   /* create hash tables */
   push->config = g_hash_table_new(NULL, NULL);
@@ -114,6 +118,9 @@ void push_destroy(push_t *push) {
 
   /* destroy storage for interned strings */
   g_string_chunk_free(push->names);
+
+  /* destroy execution mutex */
+  g_static_mutex_free(&push->mutex);
 
   g_slice_free(push_t, push);
 }
@@ -205,6 +212,7 @@ void push_do_val(push_t *push, push_val_t *val) {
 
 /* Do one single step
  * NOTE: Doesn't clear the interrupt flag
+ * NOTE: Doesn't check execution mutex
  */
 push_bool_t push_step(push_t *push) {
   push_val_t *val;
@@ -233,21 +241,32 @@ push_int_t push_steps(push_t *push, push_int_t n) {
 
   g_return_if_null(push);
 
+  g_static_mutex_lock(&push->mutex);
+
   /* clear interrupt flag */
   push->interrupt_flag = 0;
 
   /* do steps */
   for (i = 0; i < n && push_step(push); i++);
 
+  g_static_mutex_unlock(&push->mutex);
+
   return i;
 }
 
 
 void push_run(push_t *push) {
+  g_return_if_null(push);
+
+  g_static_mutex_lock(&push->mutex);
+
   /* clear interrupt flag */
   push->interrupt_flag = 0;
 
+  /* run until EXEC stack is empty or an interrupt occured */
   while (push_step(push));
+
+  g_static_mutex_unlock(&push->mutex);
 }
 
 
@@ -268,7 +287,11 @@ char *push_dump_state(push_t *push) {
   GString *xml;
 
   xml = g_string_new("<?xml version=\"1.0\" ?>\n");
+
+  g_static_mutex_lock(&push->mutex);
   push_serialize(xml, 0, push);
+  g_static_mutex_unlock(&push->mutex);
+
   return g_string_free(xml, 0);
 }
 void push_free(void *ptr) {
@@ -276,6 +299,8 @@ void push_free(void *ptr) {
 }
 
 void push_load_state(push_t *push, const char *xml) {
+  g_static_mutex_lock(&push->mutex);
   push_unserialize_parse(push, xml);
+  g_static_mutex_unlock(&push->mutex);
 }
 

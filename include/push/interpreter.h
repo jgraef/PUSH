@@ -57,6 +57,9 @@ struct push_S {
   push_int_t interrupt_flag;
   push_interrupt_handler_t interrupt_handler;
 
+  /* user data */
+  void *userdata;
+
   /* Interpreter configuration */
   GHashTable *config;
 
@@ -72,8 +75,8 @@ struct push_S {
   /* storage for interned strings */
   GStringChunk *names;
 
-  /* user data */
-  void *userdata;
+  /* Lock against concurrent execution */
+  GStaticMutex mutex;
 
   /* garbage collector */
   struct {
