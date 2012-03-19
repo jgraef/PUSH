@@ -66,6 +66,7 @@ push_int_t push_vm_num_processes(push_vm_t *vm);
 push_int_t push_vm_num_queued(push_vm_t *vm);
 void push_vm_interrupt_all(push_vm_t *vm, push_int_t interrupt_flag);
 void push_vm_kill_all(push_vm_t *vm);
+void push_vm_wait(push_vm_t *vm);
 
 
 #endif /* _PUSH_VM_H_ */

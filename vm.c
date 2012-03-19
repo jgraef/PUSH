@@ -141,3 +141,9 @@ void push_vm_kill_all(push_vm_t *vm) {
 }
 
 
+void push_vm_wait(push_vm_t *vm) {
+  while (vm->processes != NULL) {
+    g_thread_yield();
+  }
+}
+
