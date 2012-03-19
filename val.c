@@ -43,22 +43,28 @@ push_val_t *push_val_new(push_t *push, int type, ...) {
     case PUSH_TYPE_BOOL:
       val->boolean = va_arg(ap, push_bool_t);
       break;
+
     case PUSH_TYPE_CODE:
       code = va_arg(ap, push_code_t*);
       val->code = code == NULL ? push_code_new() : code;
       break;
+
     case PUSH_TYPE_INT:
       val->integer = va_arg(ap, push_int_t);
       break;
+
     case PUSH_TYPE_INSTR:
       val->instr = va_arg(ap, push_instr_t*);
       break;
+
     case PUSH_TYPE_NAME:
       val->name = va_arg(ap, push_name_t);
       break;
+
     case PUSH_TYPE_REAL:
       val->real = va_arg(ap, push_real_t);
       break;
+
     default:
       val->type = PUSH_TYPE_NONE;
       break;

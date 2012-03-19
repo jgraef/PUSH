@@ -43,20 +43,25 @@ void push_serialize_val(GString *xml, int ident_count, push_val_t *val) {
     case PUSH_TYPE_BOOL:
       g_string_append_printf(xml, "%s<bool value=\"%s\" />\n", ident, str_bool(val->boolean));
       break;
+
     case PUSH_TYPE_CODE:
       g_string_append_printf(xml, "%s<code>\n", ident);
       push_serialize_code(xml, ident_count, val->code);
       g_string_append_printf(xml, "%s</code>\n", ident);
       break;
+
     case PUSH_TYPE_INT:
       g_string_append_printf(xml, "%s<int value=\"%d\" />\n", ident, val->integer);
       break;
+
     case PUSH_TYPE_INSTR:
       g_string_append_printf(xml, "%s<instr name=\"%s\" />\n", ident, val->instr->name);
       break;
+
     case PUSH_TYPE_NAME:
       g_string_append_printf(xml, "%s<name value=\"%s\" />\n", ident, val->name);
       break;
+
     case PUSH_TYPE_REAL:
       g_string_append_printf(xml, "%s<real value=\"%f\" />\n", ident, val->real);
       break;
