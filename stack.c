@@ -71,3 +71,17 @@ void push_stack_flush(push_stack_t *stack) {
   g_queue_clear(stack);
 }
 
+
+push_stack_t *push_stack_copy(push_stack_t *stack, push_t *to_push) {
+  push_stack_t *new_stack;
+  GList *link;
+
+  new_stack = g_queue_new();
+
+  for (link = stack->head; link != NULL; link = link->next) {
+    g_queue_push_tail(new_stack, push_val_copy((push_val_t*)link->data, to_push));
+  }
+
+  return new_stack;
+}
+

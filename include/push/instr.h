@@ -44,6 +44,7 @@ struct push_instr_S {
 
 
 void push_instr_reg(push_t *push, const char *name, push_instr_func_t func, void *userdata);
+void push_instr_destroy(push_instr_t *instr);
 push_instr_t *push_instr_lookup(push_t *push, const char *name);
 void push_instr_call(push_t *push, push_instr_t *instr);
 

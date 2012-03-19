@@ -25,12 +25,8 @@
 #include "push.h"
 
 
-static push_destroy_instr(push_instr_t *instr) {
-  g_slice_free(push_instr_t, instr);
-}
 
-
-push_t *push_new_full(push_interrupt_handler_t interrupt_handler) {
+push_t *push_new_full(push_bool_t default_instructions, push_bool_t default_config, push_interrupt_handler_t interrupt_handler) {
   push_t *push;
 
   push = g_slice_new(push_t);
@@ -44,10 +40,16 @@ push_t *push_new_full(push_interrupt_handler_t interrupt_handler) {
   /* initialize execution mutex */
   g_static_mutex_init(&push->mutex);
 
+  /* initialize random number generator */
+  push->rand = g_rand_new();
+
+  /* initialize storage for interned strings */
+  push->names = g_string_chunk_new(PUSH_NAME_STORAGE_BLOCK_SIZE);
+
   /* create hash tables */
   push->config = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
   push->bindings = g_hash_table_new(NULL, NULL);
-  push->instructions = g_hash_table_new_full(NULL, NULL, NULL, (GDestroyNotify)push_destroy_instr);
+  push->instructions = g_hash_table_new_full(NULL, NULL, NULL, (GDestroyNotify)push_instr_destroy);
 
   /* initialize stacks */
   push->boolean = push_stack_new();
@@ -57,28 +59,31 @@ push_t *push_new_full(push_interrupt_handler_t interrupt_handler) {
   push->name = push_stack_new();
   push->real = push_stack_new();
 
-  /* initialize random number generator */
-  push->rand = g_rand_new();
+  if (default_config) {
+    /* default configuration */
+    push_config_set(push, "MIN-RANDOM-INT", push_val_new(push, PUSH_TYPE_INT, -100));
+    push_config_set(push, "MAX-RANDOM-INT", push_val_new(push, PUSH_TYPE_INT, 100));
+    push_config_set(push, "MIN-RANDOM-REAL", push_val_new(push, PUSH_TYPE_REAL, 0.0));
+    push_config_set(push, "MAX-RANDOM-REAL", push_val_new(push, PUSH_TYPE_REAL, 1.0));
+    push_config_set(push, "MIN-RANDOM-NAME-LENGTH", push_val_new(push, PUSH_TYPE_INT, 2));
+    push_config_set(push, "MAX-RANDOM-NAME-LENGTH", push_val_new(push, PUSH_TYPE_INT, 16));
+    push_config_set(push, "MAX-POINTS-IN-RANDOM-EXPRESSIONS", push_val_new(push, PUSH_TYPE_INT, 100));
+    push_config_set(push, "NEW-ERC-NAME-PROBABILITY", push_val_new(push, PUSH_TYPE_REAL, 0.01));
+  }
 
-  /* initialize storage for interned strings */
-  push->names = g_string_chunk_new(PUSH_NAME_STORAGE_BLOCK_SIZE);
-
-  /* default configuration */
-  push_config_set(push, "MIN-RANDOM-INT", push_val_new(push, PUSH_TYPE_INT, -100));
-  push_config_set(push, "MAX-RANDOM-INT", push_val_new(push, PUSH_TYPE_INT, 100));
-  push_config_set(push, "MIN-RANDOM-REAL", push_val_new(push, PUSH_TYPE_REAL, 0.0));
-  push_config_set(push, "MAX-RANDOM-REAL", push_val_new(push, PUSH_TYPE_REAL, 1.0));
-  push_config_set(push, "MIN-RANDOM-NAME-LENGTH", push_val_new(push, PUSH_TYPE_INT, 2));
-  push_config_set(push, "MAX-RANDOM-NAME-LENGTH", push_val_new(push, PUSH_TYPE_INT, 16));
-  push_config_set(push, "MAX-POINTS-IN-RANDOM-EXPRESSIONS", push_val_new(push, PUSH_TYPE_INT, 100));
-  push_config_set(push, "NEW-ERC-NAME-PROBABILITY", push_val_new(push, PUSH_TYPE_REAL, 0.01));
+  if (default_instructions) {
+    /* load default instruction set
+     * TODO: take from config, which instructions to load
+     */
+    push_add_dis(push);
+  }
 
   return push;
 }
 
 
 push_t *push_new(void) {
-  return push_new_full(NULL);
+  return push_new_full(TRUE, TRUE, NULL);
 }
 
 
@@ -112,6 +117,45 @@ void push_destroy(push_t *push) {
   g_static_mutex_free(&push->mutex);
 
   g_slice_free(push_t, push);
+}
+
+
+push_t *push_copy(push_t *push) {
+  push_t *new_push;
+  GHashTableIter iter;
+  const char *key;
+  push_val_t *val;
+  push_instr_t *instr;
+
+  new_push = push_new_full(FALSE, FALSE, push->interrupt_handler);
+
+  /* copy configuration */
+  g_hash_table_iter_init(&iter, push->config);
+  while (g_hash_table_iter_next(&iter, (void*)&key, (void*)&val)) {
+    push_config_set(new_push, key, push_val_copy(val, new_push));
+  }
+
+  /* copy bindings */
+  g_hash_table_iter_init(&iter, push->bindings);
+  while (g_hash_table_iter_next(&iter, (void*)&key, (void*)&val)) {
+    push_define(new_push, push_intern_name(new_push, key), push_val_copy(val, new_push));
+  }
+
+  /* copy instructions */
+  g_hash_table_iter_init(&iter, push->instructions);
+  while (g_hash_table_iter_next(&iter, (void*)&key, (void*)&instr)) {
+    push_instr_reg(new_push, key, instr->func, instr->userdata);
+  }
+
+  /* copy stacks */
+  new_push->boolean = push_stack_copy(push->boolean, new_push);
+  new_push->code = push_stack_copy(push->code, new_push);
+  new_push->exec = push_stack_copy(push->exec, new_push);
+  new_push->integer = push_stack_copy(push->integer, new_push);
+  new_push->name = push_stack_copy(push->name, new_push);
+  new_push->real = push_stack_copy(push->real, new_push);
+
+  return new_push;
 }
 
 

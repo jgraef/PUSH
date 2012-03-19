@@ -41,6 +41,11 @@ void push_instr_reg(push_t *push, const char *name, push_instr_func_t func, void
 }
 
 
+void push_instr_destroy(push_instr_t *instr) {
+  g_slice_free(push_instr_t, instr);
+}
+
+
 push_instr_t *push_instr_lookup(push_t *push, const char *name) {
   g_return_val_if_null(push, NULL);
 

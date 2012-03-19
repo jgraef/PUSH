@@ -50,6 +50,7 @@ push_val_t *push_stack_peek(push_stack_t *stack);
 push_val_t *push_stack_peek_nth(push_stack_t *stack, push_int_t n);
 int push_stack_length(push_stack_t *stack);
 void push_stack_flush(push_stack_t *stack);
+push_stack_t *push_stack_copy(push_stack_t *stack, push_t *to_push);
 
 
 #endif /* _PUSH_CODE_H_ */

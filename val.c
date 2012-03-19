@@ -74,6 +74,32 @@ push_val_t *push_val_new(push_t *push, int type, ...) {
 }
 
 
+push_val_t *push_val_copy(push_val_t *val, push_t *to_push) {
+  push_val_t *new_val;
+  push_code_t *new_code;
+  GList *link;
+
+  new_val = push_val_new(to_push, PUSH_TYPE_NONE);
+  new_val->type = val->type;
+
+  if (push_check_code(val)) {
+    /* copy code */
+    new_code = push_code_new();
+
+    for (link = val->code->head; link != NULL; link = link->next) {
+      push_code_append(new_code, push_val_copy((push_val_t*)link->data, to_push));
+    }
+
+    new_val->code = new_code;
+  }
+  else {
+    new_val->_value = val->_value;
+  }
+
+  return new_val;
+}
+
+
 void push_val_destroy(push_val_t *val) {
   g_return_if_null(val);
 

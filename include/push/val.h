@@ -69,6 +69,7 @@ struct push_val_S {
     push_instr_t *instr;
     push_name_t name;
     push_real_t real;
+    long _value;
   };
 
   /* garbage collector */
@@ -78,6 +79,7 @@ struct push_val_S {
 
 push_val_t *push_val_new(push_t *push, int type, ...);
 void push_val_destroy(push_val_t *val);
+push_val_t *push_val_copy(push_val_t *val, push_t *to_push);
 push_bool_t push_val_equal(push_val_t *val1, push_val_t *val2);
 push_val_t *push_val_make_code(push_t *push, push_val_t *val);
 
