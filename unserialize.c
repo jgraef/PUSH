@@ -21,22 +21,17 @@
  * IN THE SOFTWARE.
  */
 
-#include <stdlib.h>
 #include <string.h>
 #include <glib.h>
-#include <expat.h>
 
 #include "push.h"
-
-#include <stdio.h>
 
 
 
 #define push_unserialize_bool(s) (g_ascii_strcasecmp((s), "true") == 0)
 
 
-struct push_unserialize_parser {
-  XML_Parser xml_parser;
+struct push_unserialize_args {
   push_t *push;
 
   push_stack_t *current_stack;
@@ -72,12 +67,12 @@ static push_stack_t *push_unserialize_name2stack(push_t *push, const char *name)
 }
 
 
-static const char *push_unserialize_get_value(const char **attrs, const char *key) {
+static const char *push_unserialize_get_value(const char **attribute_names, const char **attribute_values, const char *key) {
   int i;
 
-  for (i = 0; attrs[i] != NULL; i += 2) {
-    if (strcmp(attrs[i], key) == 0) {
-      return attrs[i + 1];
+  for (i = 0; attribute_names[i] != NULL && attribute_values[i] != NULL; i++) {
+    if (strcmp(attribute_names[i], key) == 0) {
+      return attribute_values[i];
     }
   }
 
@@ -85,21 +80,21 @@ static const char *push_unserialize_get_value(const char **attrs, const char *ke
 }
 
 
-static void push_unserialize_add_value(struct push_unserialize_parser *parser, push_val_t *val) {
+static void push_unserialize_add_value(struct push_unserialize_args *args, push_val_t *val) {
   push_val_t *val2;
 
-  if (parser->val_stack != NULL) {
-    val2 = (push_val_t*)parser->val_stack->data;
+  if (args->val_stack != NULL) {
+    val2 = (push_val_t*)args->val_stack->data;
     push_code_append(val2->code, val);
   }
-  else if (parser->current_stack != NULL) {
-    g_queue_push_tail(parser->current_stack, val);
+  else if (args->current_stack != NULL) {
+    g_queue_push_tail(args->current_stack, val);
   }
-  else if (parser->current_binding != NULL) {
-    push_define(parser->push, parser->current_binding, val);
+  else if (args->current_binding != NULL) {
+    push_define(args->push, args->current_binding, val);
   }
-  else if (parser->current_config != NULL) {
-    push_config_set(parser->push, parser->current_config, val);
+  else if (args->current_config != NULL) {
+    push_config_set(args->push, args->current_config, val);
   }
   else {
     // NOTE: should not happen
@@ -108,121 +103,127 @@ static void push_unserialize_add_value(struct push_unserialize_parser *parser, p
 }
 
 
-static void push_unserialize_start_tag(struct push_unserialize_parser *parser, const char *name, const char **attrs) {
+static void push_unserialize_start_tag(GMarkupParseContext *ctx, const char *element_name, const char **attribute_names, const char **attribute_values, void *userdata, GError **error) {
+  struct push_unserialize_args *args = (struct push_unserialize_args*)userdata;
   int type;
   push_val_t *val;
   push_instr_t *instr;
   const char *val_str;
 
-  if (strcmp(name, "stack") == 0) {
-    val_str = push_unserialize_get_value(attrs, "name");
+  if (strcmp(element_name, "stack") == 0) {
+    val_str = push_unserialize_get_value(attribute_names, attribute_values, "name");
     if (val_str != NULL) {
-      parser->current_stack = push_unserialize_name2stack(parser->push, val_str);
+      args->current_stack = push_unserialize_name2stack(args->push, val_str);
     }
   }
-  else if (strcmp(name, "binding") == 0) {
-    val_str = push_unserialize_get_value(attrs, "name");
+  else if (strcmp(element_name, "binding") == 0) {
+    val_str = push_unserialize_get_value(attribute_names, attribute_values, "name");
     if (val_str != NULL) {
-      parser->current_binding = push_intern_name(parser->push, val_str);
+      args->current_binding = push_intern_name(args->push, val_str);
     }
   }
-  else if (strcmp(name, "config") == 0) {
-    val_str = push_unserialize_get_value(attrs, "name");
+  else if (strcmp(element_name, "config") == 0) {
+    val_str = push_unserialize_get_value(attribute_names, attribute_values, "name");
     if (val_str != NULL) {
-      parser->current_config = push_intern_name(parser->push, val_str);
+      args->current_config = push_intern_name(args->push, val_str);
     }
   }
-  else if (strcmp(name, "none") == 0) {
-    val = push_val_new(parser->push, PUSH_TYPE_NONE);
-    push_unserialize_add_value(parser, val);
-  }
-  else if (strcmp(name, "bool") == 0) {
-    val_str = push_unserialize_get_value(attrs, "value");
+  else if (strcmp(element_name, "bool") == 0) {
+    val_str = push_unserialize_get_value(attribute_names, attribute_values, "value");
     if (val_str != NULL) {
-      val = push_val_new(parser->push, PUSH_TYPE_BOOL, push_unserialize_bool(val_str));
-      push_unserialize_add_value(parser, val);
+      val = push_val_new(args->push, PUSH_TYPE_BOOL, push_unserialize_bool(val_str));
+      push_unserialize_add_value(args, val);
     }
   }
-  else if (strcmp(name, "code") == 0) {
-    val = push_val_new(parser->push, PUSH_TYPE_CODE, NULL);
-    parser->val_stack = g_list_prepend(parser->val_stack, val);
+  else if (strcmp(element_name, "code") == 0) {
+    val = push_val_new(args->push, PUSH_TYPE_CODE, NULL);
+    args->val_stack = g_list_prepend(args->val_stack, val);
   }
-  else if (strcmp(name, "int") == 0) {
-    val_str = push_unserialize_get_value(attrs, "value");
+  else if (strcmp(element_name, "int") == 0) {
+    val_str = push_unserialize_get_value(attribute_names, attribute_values, "value");
     if (val_str != NULL) {
-      val = push_val_new(parser->push, PUSH_TYPE_INT, atoi(val_str));
-      push_unserialize_add_value(parser, val);
+      val = push_val_new(args->push, PUSH_TYPE_INT, atoi(val_str));
+      push_unserialize_add_value(args, val);
     }
   }
-  else if (strcmp(name, "instr") == 0) {
-    val_str = push_unserialize_get_value(attrs, "name");
+  else if (strcmp(element_name, "instr") == 0) {
+    val_str = push_unserialize_get_value(attribute_names, attribute_values, "name");
     if (val_str != NULL) {
-      instr = push_instr_lookup(parser->push, val_str);
+      instr = push_instr_lookup(args->push, val_str);
       if (instr != NULL) {
-        val = push_val_new(parser->push, PUSH_TYPE_INSTR, instr);
-        push_unserialize_add_value(parser, val);
+        val = push_val_new(args->push, PUSH_TYPE_INSTR, instr);
+        push_unserialize_add_value(args, val);
       }
       else {
         g_warning("Unknown instruction: %s", val_str);
       }
     }
   }
-  else if (strcmp(name, "name") == 0) {
-    val_str = push_unserialize_get_value(attrs, "value");
+  else if (strcmp(element_name, "name") == 0) {
+    val_str = push_unserialize_get_value(attribute_names, attribute_values, "value");
     if (val_str != NULL) {
-      val = push_val_new(parser->push, PUSH_TYPE_NAME, push_intern_name(parser->push, val_str));
-      push_unserialize_add_value(parser, val);
+      val = push_val_new(args->push, PUSH_TYPE_NAME, push_intern_name(args->push, val_str));
+      push_unserialize_add_value(args, val);
     }
   }
-  else if (strcmp(name, "real") == 0) {
-    val_str = push_unserialize_get_value(attrs, "value");
+  else if (strcmp(element_name, "real") == 0) {
+    val_str = push_unserialize_get_value(attribute_names, attribute_values, "value");
     if (val_str != NULL) {
-      val = push_val_new(parser->push, PUSH_TYPE_REAL, strtod(val_str, NULL));
-      push_unserialize_add_value(parser, val);
+      val = push_val_new(args->push, PUSH_TYPE_REAL, strtod(val_str, NULL));
+      push_unserialize_add_value(args, val);
     }
   }
 }
 
 
-static void push_unserialize_end_tag(struct push_unserialize_parser *parser, const char *name, const char *attrs) {
+static void push_unserialize_end_tag(GMarkupParseContext *ctx, const char *element_name, void *userdata, GError **error) {
+  struct push_unserialize_args *args = (struct push_unserialize_args*)userdata;
   push_val_t *val;
 
-  if (strcmp(name, "stack") == 0) {
-    parser->current_stack = NULL;
+  if (strcmp(element_name, "stack") == 0) {
+    args->current_stack = NULL;
   }
-  else if (strcmp(name, "binding") == 0) {
-    parser->current_binding = NULL;
+  else if (strcmp(element_name, "binding") == 0) {
+    args->current_binding = NULL;
   }
-  else if (strcmp(name, "config") == 0) {
-    parser->current_config = NULL;
+  else if (strcmp(element_name, "config") == 0) {
+    args->current_config = NULL;
   }
-  else if (strcmp(name, "code") == 0 && parser->val_stack != NULL) {
+  else if (strcmp(element_name, "code") == 0 && args->val_stack != NULL) {
     // pop top-most (code) value
-    val = (push_val_t*)parser->val_stack->data;
-    parser->val_stack = g_list_delete_link(parser->val_stack, parser->val_stack);
+    val = (push_val_t*)args->val_stack->data;
+    args->val_stack = g_list_delete_link(args->val_stack, args->val_stack);
 
     // add value
-    push_unserialize_add_value(parser, val);
+    push_unserialize_add_value(args, val);
   }
 }
 
 
-void push_unserialize_parse(push_t *push, const char *xml_data) {
-  struct push_unserialize_parser parser;
+static void push_unserialize_error(GMarkupParseContext *ctx, GError *error, void *userdata) {
 
-  parser.xml_parser = XML_ParserCreate("UTF-8");
-  parser.push = push;
-  parser.current_binding = NULL;
-  parser.current_config = NULL;
-  parser.current_stack = NULL;
-  parser.val_stack = NULL;
+}
 
-  XML_SetUserData(parser.xml_parser, &parser);
-  XML_SetElementHandler(parser.xml_parser, (XML_StartElementHandler)push_unserialize_start_tag, (XML_EndElementHandler)push_unserialize_end_tag);
 
-  XML_Parse(parser.xml_parser, xml_data, strlen(xml_data), 1);
+void push_unserialize_parse(push_t *push, const char *xml_data, GError **error) {
+  const GMarkupParser parser = {
+    .start_element = push_unserialize_start_tag,
+    .end_element = push_unserialize_end_tag,
+    .error = push_unserialize_error
+  };
+  struct push_unserialize_args args;
+  GMarkupParseContext *ctx;
 
-  XML_ParserFree(parser.xml_parser);
+  args.push = push;
+  args.current_binding = NULL;
+  args.current_config = NULL;
+  args.current_stack = NULL;
+  args.val_stack = NULL;
+
+  ctx = g_markup_parse_context_new(&parser, 0, &args, NULL);
+  g_markup_parse_context_parse(ctx, xml_data, strlen(xml_data), error);
+  g_markup_parse_context_end_parse(ctx, error);
+  g_markup_parse_context_free(ctx);
 }
 
 

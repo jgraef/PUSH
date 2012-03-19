@@ -331,7 +331,7 @@ void push_free(void *ptr) {
 
 void push_load_state(push_t *push, const char *xml) {
   g_static_mutex_lock(&push->mutex);
-  push_unserialize_parse(push, xml);
+  push_unserialize_parse(push, xml, NULL);
   g_static_mutex_unlock(&push->mutex);
 }
 

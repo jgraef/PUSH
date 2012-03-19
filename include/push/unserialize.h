@@ -27,7 +27,7 @@
 #include "push/interpreter.h"
 
 
-void push_unserialize_parse(push_t *push, const char *xml_data);
+void push_unserialize_parse(push_t *push, const char *xml_data, GError **error);
 
 
 #endif /* _PUSH_UNSERIALIZE_H_ */
