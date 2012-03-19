@@ -33,7 +33,6 @@
 
 /* Include all header files */
 #include "push/code.h"
-#include "push/config.h"
 #include "push/gc.h"
 #include "push/instr.h"
 #include "push/rand.h"

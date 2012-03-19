@@ -45,7 +45,7 @@ push_t *push_new_full(push_interrupt_handler_t interrupt_handler) {
   g_static_mutex_init(&push->mutex);
 
   /* create hash tables */
-  push->config = g_hash_table_new(NULL, NULL);
+  push->config = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
   push->bindings = g_hash_table_new(NULL, NULL);
   push->instructions = g_hash_table_new_full(NULL, NULL, NULL, (GDestroyNotify)push_destroy_instr);
 
@@ -131,6 +131,16 @@ push_name_t push_intern_name(push_t *push, const char *name) {
   g_return_val_if_null(push, NULL);
 
   return g_string_chunk_insert_const(push->names, name);
+}
+
+
+void push_config_set(push_t *push, const char *key, push_val_t *val) {
+  g_hash_table_insert(push->config, g_strdup(key), val);
+}
+
+
+push_val_t *push_config_get(push_t *push, const char *key) {
+  return g_hash_table_lookup(push->config, key);
 }
 
 
