@@ -90,6 +90,7 @@ push_t *push_new_full(push_bool_t default_instructions, push_bool_t default_conf
 push_t *push_new(void);
 void push_destroy(push_t *push);
 push_t *push_copy(push_t *push);
+void push_flush(push_t *push);
 push_name_t push_intern_name(push_t *push, const char *name);
 void push_config_set(push_t *push, const char *key, push_val_t *val);
 push_val_t *push_config_get(push_t *push, const char *key);

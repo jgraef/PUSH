@@ -159,6 +159,23 @@ push_t *push_copy(push_t *push) {
 }
 
 
+void push_flush(push_t *push) {
+  /* flush all stacks */
+  push_stack_flush(push->boolean);
+  push_stack_flush(push->code);
+  push_stack_flush(push->exec);
+  push_stack_flush(push->integer);
+  push_stack_flush(push->name);
+  push_stack_flush(push->real);
+
+  /* remove all bindings */
+  g_hash_table_remove_all(push->bindings);
+
+  /* since we unreferenced all values, call the garbage collector to free them */
+  push_gc_collect(push);
+}
+
+
 push_name_t push_intern_name(push_t *push, const char *name) {
   g_return_val_if_null(push, NULL);
 
