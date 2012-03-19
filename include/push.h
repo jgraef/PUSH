@@ -24,7 +24,7 @@
  *       - Beim Laden von DIS überprüfen ob die Instruktion per Config geladen werden soll
  *       - Stack size limits
  *       - Don't intern config keys
- *       - Load from config: random seed/state, NEW-ERC-NAME-PROPABILITY
+ *       - Load from config: random seed/state
  */
 
 #ifndef _PUSH_H_

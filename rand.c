@@ -161,7 +161,7 @@ push_real_t push_rand_real(push_t *push) {
 
 
 push_val_t *push_rand_val(push_t *push, int type, push_int_t *size, push_bool_t force_size) {
-  push_val_t *val;
+  push_val_t *val, *p;
   push_int_t size_dummy = 1;
 
   g_return_val_if_null(push, NULL);
@@ -198,7 +198,14 @@ push_val_t *push_rand_val(push_t *push, int type, push_int_t *size, push_bool_t 
       break;
 
     case PUSH_TYPE_NAME:
-      val->name = g_rand_boolean(push->rand) ? push_rand_bound_name(push) : push_rand_name(push);
+      p = push_config_get(push, "NEW-ERC-NAME-PROBABILITY");
+      if (p != NULL && push_check_real(p)) {
+        val->name = g_rand_double(push->rand) < p->real ? push_rand_name(push) : push_rand_bound_name(push);
+      }
+      else {
+        g_warning("Configuration value 'NEW-ERC-NAME-PROBABILITY' is not a real number");
+        val->name = push_rand_name(push);
+      }
       break;
 
     case PUSH_TYPE_REAL:

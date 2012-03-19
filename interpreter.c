@@ -71,6 +71,7 @@ push_t *push_new_full(push_interrupt_handler_t interrupt_handler) {
   push_config_set(push, "MIN-RANDOM-NAME-LENGTH", push_val_new(push, PUSH_TYPE_INT, 2));
   push_config_set(push, "MAX-RANDOM-NAME-LENGTH", push_val_new(push, PUSH_TYPE_INT, 16));
   push_config_set(push, "MAX-POINTS-IN-RANDOM-EXPRESSIONS", push_val_new(push, PUSH_TYPE_INT, 100));
+  push_config_set(push, "NEW-ERC-NAME-PROBABILITY", push_val_new(push, PUSH_TYPE_REAL, 0.01));
 
   return push;
 }
