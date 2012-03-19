@@ -86,20 +86,7 @@ void push_destroy(push_t *push) {
   g_return_if_null(push);
   g_return_if_fail(g_static_mutex_trylock(&push->mutex));
 
-  /* clear stacks */
-  push_stack_flush(push->boolean);
-  push_stack_flush(push->code);
-  push_stack_flush(push->exec);
-  push_stack_flush(push->integer);
-  push_stack_flush(push->name);
-  push_stack_flush(push->real);
-
-  /* clear hash tables */
-  g_hash_table_remove_all(push->bindings);
-  g_hash_table_remove_all(push->config);
-
-  /* collect everything & destroy GC */
-  push_gc_collect(push, PUSH_TRUE);
+  /* destroy GC and all values tracked by it */
   push_gc_destroy(push);
 
   /* destroy stacks */
@@ -126,7 +113,6 @@ void push_destroy(push_t *push) {
 
   g_slice_free(push_t, push);
 }
-
 
 
 push_name_t push_intern_name(push_t *push, const char *name) {
@@ -225,6 +211,7 @@ void push_do_val(push_t *push, push_val_t *val) {
 /* Do one single step
  * NOTE: Doesn't clear the interrupt flag
  * NOTE: Doesn't check execution mutex
+ * NOTE: Doesn't call the garbage collector
  */
 push_bool_t push_step(push_t *push) {
   push_val_t *val;
@@ -233,8 +220,6 @@ push_bool_t push_step(push_t *push) {
   if (val != NULL) {
     push_do_val(push, val);
   }
-
-  push_gc_collect(push, PUSH_FALSE);
 
   if (push->interrupt_flag != 0) {
     /* call the interrupt handler */
@@ -261,6 +246,8 @@ push_int_t push_steps(push_t *push, push_int_t n) {
   /* do steps */
   for (i = 0; i < n && push_step(push); i++);
 
+  push_gc_collect(push);
+
   g_static_mutex_unlock(&push->mutex);
 
   return i;
@@ -277,6 +264,8 @@ void push_run(push_t *push) {
 
   /* run until EXEC stack is empty or an interrupt occured */
   while (push_step(push));
+
+  push_gc_collect(push);
 
   g_static_mutex_unlock(&push->mutex);
 }

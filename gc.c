@@ -70,50 +70,74 @@ void push_gc_init(push_t *push) {
 void push_gc_destroy(push_t *push) {
   g_return_if_null(push);
 
-  g_list_free(push->gc.values);  
+  g_list_free_full(push->gc.values, (GDestroyNotify)push_val_destroy);  
 }
 
 
-void push_gc_collect(push_t *push, push_bool_t force) {
-  GList *link, *next_link;
+void push_gc_collect(push_t *push) {
+  int generation;
+  GList *link;
+  push_val_t *val;
 
   g_return_if_null(push);
 
   push->gc.generation++;
+  generation = push->gc.generation;
 
-  if (push->gc.generation % PUSH_GC_INTERVAL ==  0 || force) {
-    /* mark stacks positive */
-    push_gc_mark_stack(push, push->boolean);
-    push_gc_mark_stack(push, push->code);
-    push_gc_mark_stack(push, push->exec);
-    push_gc_mark_stack(push, push->integer);
-    push_gc_mark_stack(push, push->name);
-    push_gc_mark_stack(push, push->real);
+  /* mark stacks positive */
+  push_gc_mark_stack(push, push->boolean);
+  push_gc_mark_stack(push, push->code);
+  push_gc_mark_stack(push, push->exec);
+  push_gc_mark_stack(push, push->integer);
+  push_gc_mark_stack(push, push->name);
+  push_gc_mark_stack(push, push->real);
 
-    /* mark bindings positive */
-    push_gc_mark_hash_table(push, push->bindings);
+  /* mark bindings positive */
+  push_gc_mark_hash_table(push, push->bindings);
 
-    /* mark config positive */
-    push_gc_mark_hash_table(push, push->config);
+  /* mark config positive */
+  push_gc_mark_hash_table(push, push->config);
 
-    /* destroy negative marked values */
-    next_link = push->gc.values;
-    while ((link = g_list_find_custom(next_link, push, (GCompareFunc)push_gc_find_sweep)) != NULL) {
-      next_link = link->next;
-      push_val_destroy((push_val_t*)link->data);
+  /* destroy negative marked values */
+  for (link = push->gc.values; link != NULL; link = link->next) {
+    val = (push_val_t*)link->data;
+    if (val->gc != generation) {
+      push_val_destroy(val);
       push->gc.values = g_list_delete_link(push->gc.values, link);
     }
   }
 }
 
 
-void push_gc_track(push_t *push, push_val_t *val) {
+void push_gc_track(push_t *push, push_val_t *val, push_bool_t recursive) {
+  GList *link;
+
+  g_return_if_null(push);
+  g_return_if_null(val);
+
   val->gc = push->gc.generation;
   push->gc.values = g_list_prepend(push->gc.values, val);
+
+  if (recursive && push_check_code(val)) {
+    for (link = val->code->head; link != NULL; link = link->next) {
+      push_gc_track(push, (push_val_t*)link->data, TRUE);
+    }
+  }
 }
 
 
-void push_gc_untrack(push_t *push, push_val_t *val) {
+void push_gc_untrack(push_t *push, push_val_t *val, push_bool_t recursive) {
+  GList *link;
+
+  g_return_if_null(push);
+  g_return_if_null(val);
+
   push->gc.values = g_list_remove(push->gc.values, val);
+
+  if (recursive && push_check_code(val)) {
+    for (link = val->code->head; link != NULL; link = link->next) {
+      push_gc_untrack(push, (push_val_t*)link->data, TRUE);
+    }
+  }
 }
 

@@ -28,14 +28,11 @@
 #include "push/interpreter.h"
 
 
-#define PUSH_GC_INTERVAL 1024
-
-
 void push_gc_init(push_t *push);
 void push_gc_destroy(push_t *push);
-void push_gc_collect(push_t *push, push_bool_t force);
-void push_gc_track(push_t *push, push_val_t *val);
-void push_gc_untrack(push_t *push, push_val_t *val);
+void push_gc_collect(push_t *push);
+void push_gc_track(push_t *push, push_val_t *val, push_bool_t recursive);
+void push_gc_untrack(push_t *push, push_val_t *val, push_bool_t recursive);
 
 
 #endif /* _PUSH_GC_H_ */

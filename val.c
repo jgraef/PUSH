@@ -67,7 +67,7 @@ push_val_t *push_val_new(push_t *push, int type, ...) {
 
   /* add to garbage collection */
   if (push != NULL) {
-    push_gc_track(push, val);
+    push_gc_track(push, val, FALSE);
   }
 
   return val;
