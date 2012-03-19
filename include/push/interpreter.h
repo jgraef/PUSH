@@ -98,7 +98,7 @@ void push_undef(push_t *push, push_name_t name);
 push_val_t *push_lookup(push_t *push, push_name_t name);
 void push_do_val(push_t *push, push_val_t *val);
 push_bool_t push_step(push_t *push);
-void push_run(push_t *push, push_int_t max_steps);
+push_int_t push_run(push_t *push, push_int_t max_steps);
 push_bool_t push_done(push_t *push);
 char *push_dump_state(push_t *push);
 void push_free(void *ptr);

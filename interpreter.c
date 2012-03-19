@@ -277,7 +277,7 @@ push_bool_t push_step(push_t *push) {
 }
 
 
-void push_run(push_t *push, push_int_t max_steps) {
+push_int_t push_run(push_t *push, push_int_t max_steps) {
   push_int_t i;
 
   g_return_if_null(push);
@@ -292,12 +292,14 @@ void push_run(push_t *push, push_int_t max_steps) {
     for (i = 0; i < max_steps && push_step(push); i++);
   }
   else {
-    while (push_step(push));
+    for (i = 0; push_step(push); i++);
   }
 
   push_gc_collect(push);
 
   g_static_mutex_unlock(&push->mutex);
+
+  return i;
 }
 
 
