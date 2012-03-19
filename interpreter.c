@@ -233,8 +233,8 @@ push_bool_t push_step(push_t *push) {
 }
 
 
-push_int_t push_steps(push_t *push, push_int_t n) {
-  int i;
+void push_run(push_t *push, push_int_t max_steps) {
+  push_int_t i;
 
   g_return_if_null(push);
 
@@ -243,27 +243,13 @@ push_int_t push_steps(push_t *push, push_int_t n) {
   /* clear interrupt flag */
   push->interrupt_flag = 0;
 
-  /* do steps */
-  for (i = 0; i < n && push_step(push); i++);
-
-  push_gc_collect(push);
-
-  g_static_mutex_unlock(&push->mutex);
-
-  return i;
-}
-
-
-void push_run(push_t *push) {
-  g_return_if_null(push);
-
-  g_static_mutex_lock(&push->mutex);
-
-  /* clear interrupt flag */
-  push->interrupt_flag = 0;
-
-  /* run until EXEC stack is empty or an interrupt occured */
-  while (push_step(push));
+  /* run until max_steps reached, EXEC stack is empty or an interrupt was raised */
+  if (max_steps > 0) {
+    for (i = 0; i < max_steps && push_step(push); i++);
+  }
+  else {
+    while (push_step(push));
+  }
 
   push_gc_collect(push);
 

@@ -27,12 +27,7 @@
 
 
 static void push_vm_run_process(push_t *push, push_vm_t *vm) {
-  if (vm->max_steps > 0) {
-    push_steps(push, vm->max_steps);
-  }
-  else {
-    push_run(push);
-  }
+  push_run(push, vm->max_steps);
 
   g_static_mutex_lock(&vm->mutex);
   vm->processes = g_list_remove(vm->processes, push);  
