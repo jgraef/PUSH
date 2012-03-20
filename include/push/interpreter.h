@@ -43,7 +43,7 @@ typedef struct push_S push_t;
 typedef void (*push_interrupt_handler_t)(push_t *push, push_int_t interrupt_flag, void *userdata);
 
 /* Step hook function type */
-typedef void (*push_step_hook_t)(push_t *push, void *userdata);
+typedef push_bool_t (*push_step_hook_t)(push_t *push, void *userdata);
 
 
 /* Interpreter */

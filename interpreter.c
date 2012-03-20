@@ -295,7 +295,9 @@ push_bool_t push_step(push_t *push) {
 
   if (push->step_hook != NULL) {
     /* call the step hook */
-    push->step_hook(push, push->userdata);
+    if (!push->step_hook(push, push->userdata) ){
+      return FALSE;
+    }
   }
 
   return val != NULL;
