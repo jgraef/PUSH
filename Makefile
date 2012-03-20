@@ -12,7 +12,7 @@ PREFIX = /usr/local
 all: dep libpush.so test
 
 clean:
-	rm -f $(OBJ) .depend libpush.so test
+	rm -f $(OBJ) $(DEPENDFILE) libpush.so test
 
 install: all
 	cp libpush.so $(PREFIX)/lib
