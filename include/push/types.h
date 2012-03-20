@@ -24,8 +24,12 @@
 #define _PUSH_TYPES_H_
 
 
-#define PUSH_FALSE 0
-#define PUSH_TRUE  1
+#ifndef FALSE
+  #define FALSE 0
+#endif
+#ifndef TRUE
+  #define TRUE 1
+#endif
 typedef int push_bool_t;
 typedef int push_int_t;
 typedef char *push_name_t; /* NOTE: interned string */

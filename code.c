@@ -117,11 +117,11 @@ push_code_t *push_code_dup(push_code_t *code) {
 push_bool_t push_code_equal(push_code_t *code1, push_code_t *code2) {
   GList *link1, *link2;
 
-  g_return_val_if_null(code1, PUSH_FALSE);
-  g_return_val_if_null(code2, PUSH_FALSE);
+  g_return_val_if_null(code1, FALSE);
+  g_return_val_if_null(code2, FALSE);
 
   if (code1->length != code2->length) {
-    return PUSH_FALSE;
+    return FALSE;
   }
 
   link1 = code1->head;
@@ -129,14 +129,14 @@ push_bool_t push_code_equal(push_code_t *code1, push_code_t *code2) {
 
   while (link1 != NULL && link2 != NULL) {
     if (!push_val_equal(link1->data, link2->data)) {
-      return PUSH_FALSE;
+      return FALSE;
     }
 
     link1 = link1->next;
     link2 = link2->next;
   }
 
-  return PUSH_TRUE;
+  return TRUE;
 
 }
 

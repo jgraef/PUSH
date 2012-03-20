@@ -287,7 +287,7 @@ push_bool_t push_step(push_t *push) {
     if (push->interrupt_handler != NULL && push->interrupt_flag > 0) {
       push->interrupt_handler(push, push->interrupt_flag, push->userdata);
     }
-    return PUSH_FALSE;
+    return FALSE;
   }
 
   return val != NULL;

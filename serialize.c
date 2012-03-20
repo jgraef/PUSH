@@ -28,7 +28,7 @@
 
 #define make_ident(n) g_strnfill(n, ' ')
 #define free_ident(i) g_free(i)
-#define str_bool(b)   ((b) ? "true" : "false")
+#define str_bool(b)   ((b) ? "TRUE" : "FALSE")
 
 
 void push_serialize_val(GString *xml, int ident_count, push_val_t *val) {

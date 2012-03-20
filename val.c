@@ -118,14 +118,14 @@ void push_val_destroy(push_val_t *val) {
 
 
 push_bool_t push_val_equal(push_val_t *val1, push_val_t *val2) {
-  g_return_val_if_null(val1, PUSH_FALSE);
-  g_return_val_if_null(val2, PUSH_FALSE);
+  g_return_val_if_null(val1, FALSE);
+  g_return_val_if_null(val2, FALSE);
 
   if (val1 == val2) {
-    return PUSH_TRUE;
+    return TRUE;
   }
   else if (val1->type != val2->type) {
-    return PUSH_FALSE;
+    return FALSE;
   }
   else {
     switch (val1->type) {
@@ -144,7 +144,7 @@ push_bool_t push_val_equal(push_val_t *val1, push_val_t *val2) {
       case PUSH_TYPE_REAL:
         return val1->real == val2->real;
       default:
-        return PUSH_FALSE;
+        return FALSE;
     }
   }
 }

@@ -48,7 +48,7 @@ void push_rand_set_seed(push_t *push, int seed) {
 
 
 push_bool_t push_rand_bool(push_t *push) {
-  g_return_val_if_null(push, PUSH_FALSE);
+  g_return_val_if_null(push, FALSE);
 
   return g_rand_boolean(push->rand);
 }
@@ -68,7 +68,7 @@ push_code_t *push_rand_code(push_t *push, push_int_t *size, push_bool_t force_si
   *size -= this_size;
 
   while (this_size > 0) {
-    val = push_rand_val(push, PUSH_TYPE_NONE, &this_size, PUSH_FALSE);
+    val = push_rand_val(push, PUSH_TYPE_NONE, &this_size, FALSE);
 
     push_code_append(code, val);
   }

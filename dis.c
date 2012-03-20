@@ -211,7 +211,7 @@ static void push_instr_bool_or(push_t *push, void *userdata) {
 }
 
 static void push_instr_bool_rand(push_t *push, void *userdata) {
-  push_stack_push(push->boolean, push_rand_val(push, PUSH_TYPE_BOOL, NULL, PUSH_FALSE));
+  push_stack_push(push->boolean, push_rand_val(push, PUSH_TYPE_BOOL, NULL, FALSE));
 }
 
 
@@ -653,7 +653,7 @@ static void push_instr_code_rand(push_t *push, void *userdata) {
       size = val2->integer;
     }
 
-    push_stack_push(push->code, push_rand_val(push, size == 1 ? PUSH_TYPE_NONE: PUSH_TYPE_CODE, &size, PUSH_TRUE));
+    push_stack_push(push->code, push_rand_val(push, size == 1 ? PUSH_TYPE_NONE: PUSH_TYPE_CODE, &size, TRUE));
   }
 }
 
@@ -922,7 +922,7 @@ static void push_instr_int_min(push_t *push, void *userdata) {
 }
 
 static void push_instr_int_rand(push_t *push, void *userdata) {
-  push_stack_push(push->integer, push_rand_val(push, PUSH_TYPE_INT, NULL, PUSH_FALSE));
+  push_stack_push(push->integer, push_rand_val(push, PUSH_TYPE_INT, NULL, FALSE));
 }
 
 /* NAME */
@@ -1105,7 +1105,7 @@ static void push_instr_real_min(push_t *push, void *userdata) {
 }
 
 static void push_instr_real_rand(push_t *push, void *userdata) {
-  push_stack_push(push->real, push_rand_val(push, PUSH_TYPE_REAL, NULL, PUSH_FALSE));
+  push_stack_push(push->real, push_rand_val(push, PUSH_TYPE_REAL, NULL, FALSE));
 }
 
 static void push_instr_real_sin(push_t *push, void *userdata) {
