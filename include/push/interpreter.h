@@ -42,6 +42,9 @@ typedef struct push_S push_t;
 /* Interrupt handler type */
 typedef void (*push_interrupt_handler_t)(push_t *push, push_int_t interrupt_flag, void *userdata);
 
+/* Step hook function type */
+typedef void (*push_step_hook_t)(push_t *push, void *userdata);
+
 
 /* Interpreter */
 struct push_S {
@@ -56,6 +59,9 @@ struct push_S {
   /* Interrupt flag & handler */
   push_int_t interrupt_flag;
   push_interrupt_handler_t interrupt_handler;
+
+  /* Step hook */
+  push_step_hook_t step_hook;
 
   /* user data */
   void *userdata;
@@ -86,7 +92,7 @@ struct push_S {
 };
 
 
-push_t *push_new_full(push_bool_t default_instructions, push_bool_t default_config, push_interrupt_handler_t interrupt_handler);
+push_t *push_new_full(push_bool_t default_instructions, push_bool_t default_config, push_interrupt_handler_t interrupt_handler, push_step_hook_t step_hook);
 push_t *push_new(void);
 void push_destroy(push_t *push);
 push_t *push_copy(push_t *push);

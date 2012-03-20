@@ -26,13 +26,16 @@
 
 
 
-push_t *push_new_full(push_bool_t default_instructions, push_bool_t default_config, push_interrupt_handler_t interrupt_handler) {
+push_t *push_new_full(push_bool_t default_instructions, push_bool_t default_config, push_interrupt_handler_t interrupt_handler, push_step_hook_t step_hook) {
   push_t *push;
 
   push = g_slice_new(push_t);
 
   /* set interrupt handler */
   push->interrupt_handler = interrupt_handler;
+
+  /* set step hook */
+  push->step_hook = step_hook;
 
   /* initialize garbage collection */
   push_gc_init(push);
@@ -83,7 +86,7 @@ push_t *push_new_full(push_bool_t default_instructions, push_bool_t default_conf
 
 
 push_t *push_new(void) {
-  return push_new_full(TRUE, TRUE, NULL);
+  return push_new_full(TRUE, TRUE, NULL, NULL);
 }
 
 
@@ -127,7 +130,7 @@ push_t *push_copy(push_t *push) {
   push_val_t *val;
   push_instr_t *instr;
 
-  new_push = push_new_full(FALSE, FALSE, push->interrupt_handler);
+  new_push = push_new_full(FALSE, FALSE, push->interrupt_handler, push->step_hook);
 
   /* copy configuration */
   g_hash_table_iter_init(&iter, push->config);
@@ -288,6 +291,11 @@ push_bool_t push_step(push_t *push) {
       push->interrupt_handler(push, push->interrupt_flag, push->userdata);
     }
     return FALSE;
+  }
+
+  if (push->step_hook != NULL) {
+    /* call the step hook */
+    push->step_hook(push, push->userdata);
   }
 
   return val != NULL;
