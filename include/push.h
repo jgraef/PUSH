@@ -34,6 +34,7 @@
 /* Include all header files */
 #include "push/code.h"
 #include "push/gc.h"
+#include "push/gp.h"
 #include "push/instr.h"
 #include "push/rand.h"
 #include "push/serialize.h"

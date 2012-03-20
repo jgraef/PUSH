@@ -1,18 +1,20 @@
-CFLAGS = -I include/ `pkg-config glib-2.0 gthread-2.0 --cflags` -fPIC -O3 -ffast-math
-#CFLAGS = -I include/ `pkg-config glib-2.0 gthread-2.0 --cflags` -fPIC -O0 -g
+#CFLAGS = -I include/ `pkg-config glib-2.0 gthread-2.0 --cflags` -fPIC -O3 -ffast-math
+CFLAGS = -I include/ `pkg-config glib-2.0 gthread-2.0 --cflags` -fPIC -O0 -g
 LDFLAGS = -lm `pkg-config glib-2.0 gthread-2.0 --libs`
 
-SRC = code.c dis.c gc.c instr.c interpreter.c rand.c push.c serialize.c stack.c unserialize.c val.c vm.c
+SRC = code.c dis.c gc.c gp.c instr.c interpreter.c rand.c push.c serialize.c stack.c unserialize.c val.c vm.c
 OBJ = $(SRC:%.c=%.o)
 DEPENDFILE = .depend
 PREFIX = /usr/local
 
 .PHONY: all clean install dep
 
-all: dep libpush.so test
+all: dep libpush.so
+	make -C examples/
 
 clean:
 	rm -f $(OBJ) $(DEPENDFILE) libpush.so test
+	make -C examples/ clean
 
 install: all
 	cp libpush.so $(PREFIX)/lib
