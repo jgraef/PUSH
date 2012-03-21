@@ -29,9 +29,10 @@
 static void push_vm_run_process(push_t *push, push_vm_t *vm) {
   push_run(push, vm->max_steps);
 
-  g_static_mutex_lock(&vm->mutex);
+  g_mutex_lock(vm->mutex);
   vm->processes = g_list_remove(vm->processes, push);  
-  g_static_mutex_unlock(&vm->mutex);
+  g_cond_signal(vm->wait_cond);
+  g_mutex_unlock(vm->mutex);
 
   if (vm->done_callback != NULL) {
     vm->done_callback(vm, push);
@@ -55,7 +56,8 @@ push_vm_t *push_vm_new(push_int_t num_threads, push_int_t max_steps, push_vm_don
   vm->processes = NULL;
   vm->max_steps = max_steps;
   vm->done_callback = done_callback;
-  g_static_mutex_init(&vm->mutex);
+  vm->mutex = g_mutex_new();
+  vm->wait_cond = g_cond_new();
 
   /* initialize thread pool */
   vm->threads = g_thread_pool_new((GFunc)push_vm_run_process, vm, num_threads, TRUE, NULL);
@@ -70,13 +72,14 @@ push_vm_t *push_vm_new(push_int_t num_threads, push_int_t max_steps, push_vm_don
 
 void push_vm_destroy(push_vm_t *vm, push_bool_t kill_all) {
   g_return_if_null(vm);
-  g_return_if_fail(g_static_mutex_trylock(&vm->mutex));
 
   if (kill_all) {
     push_vm_kill_all(vm);
   }
 
   g_thread_pool_free(vm->threads, kill_all, TRUE);
+  g_mutex_free(vm->mutex);
+  g_cond_free(vm->wait_cond);
 
   g_slice_free(push_vm_t, vm);
 }
@@ -85,10 +88,10 @@ void push_vm_destroy(push_vm_t *vm, push_bool_t kill_all) {
 void push_vm_run(push_vm_t *vm, push_t *push) {
   g_return_if_null(vm);
 
-  g_static_mutex_lock(&vm->mutex);
+  g_mutex_lock(vm->mutex);
   vm->processes = g_list_prepend(vm->processes, push);
   g_thread_pool_push(vm->threads, push, NULL);
-  g_static_mutex_unlock(&vm->mutex);
+  g_mutex_unlock(vm->mutex);
 }
 
 
@@ -97,9 +100,9 @@ push_int_t push_vm_num_processes(push_vm_t *vm) {
 
   g_return_val_if_null(vm, 0);
 
-  g_static_mutex_lock(&vm->mutex);
+  g_mutex_lock(vm->mutex);
   num = g_list_length(vm->processes);
-  g_static_mutex_unlock(&vm->mutex);
+  g_mutex_unlock(vm->mutex);
 
   return num;
 }
@@ -110,9 +113,9 @@ push_int_t push_vm_num_queued(push_vm_t *vm) {
 
   g_return_val_if_null(vm, 0);
 
-  g_static_mutex_lock(&vm->mutex);
+  g_mutex_lock(vm->mutex);
   num = g_thread_pool_unprocessed(vm->threads);
-  g_static_mutex_unlock(&vm->mutex);
+  g_mutex_unlock(vm->mutex);
 
   return num;
 }
@@ -123,11 +126,11 @@ void push_vm_interrupt_all(push_vm_t *vm, push_int_t interrupt_flag) {
 
   g_return_if_null(vm);
 
-  g_static_mutex_lock(&vm->mutex);
+  g_mutex_lock(vm->mutex);
   for (link = vm->processes; link != NULL; link = link->next) {
     push_interrupt((push_t*)link->data, interrupt_flag);
   }
-  g_static_mutex_unlock(&vm->mutex);
+  g_mutex_unlock(vm->mutex);
 }
 
 
@@ -137,8 +140,10 @@ void push_vm_kill_all(push_vm_t *vm) {
 
 
 void push_vm_wait(push_vm_t *vm) {
+  g_mutex_lock(vm->mutex);
   while (vm->processes != NULL) {
-    g_thread_yield();
+    g_cond_wait(vm->wait_cond, vm->mutex);
   }
+  g_mutex_unlock(vm->mutex);
 }
 

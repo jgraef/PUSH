@@ -55,7 +55,10 @@ struct push_vm_S {
   push_vm_done_callback_t done_callback;
 
   /* Mutex */
-  GStaticMutex mutex;
+  GMutex *mutex;
+
+  /* Condition for waiting until all processes are done */
+  GCond *wait_cond;
 };
 
 
