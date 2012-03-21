@@ -1,4 +1,4 @@
-/* gc.h - A simple mark-and-sweep garbage collector for Push values
+/* gc.h - A multi-threaded mark-and-sweep garbage collector for PUSH values
  *
  * Copyright (c) 2012 Janosch Gräf <janosch.graef@gmx.net>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -24,16 +24,47 @@
 #define _PUSH_GC_H_
 
 
+#include <glib.h>
+
+
+typedef struct push_gc_S push_gc_t;
+typedef struct push_gc_val_S push_gc_val_t;
+
+
 #include "push/types.h"
 #include "push/interpreter.h"
+#include "push/val.h"
 
 
-void push_gc_init(push_t *push);
-void push_gc_destroy(push_t *push);
-void push_gc_collect(push_t *push);
-void push_gc_track(push_t *push, push_val_t *val, push_bool_t recursive);
-void push_gc_untrack(push_t *push, push_val_t *val, push_bool_t recursive);
+/* Undefine this, if it causes errors */
+#define GC_USE_ATEXIT 1
 
+/* Collecting interval */
+#define PUSH_GC_WAIT_USEC 100000 /* 1 s */
+
+
+struct push_gc_S {
+  /* GC thread */
+  GThread *thread;
+
+  /* Message queue */
+  GAsyncQueue *queue;
+};
+
+
+struct push_gc_val_S {
+  push_int_t mark;
+  push_bool_t untrack;
+};
+
+
+push_gc_t *push_gc_new(void);
+void push_gc_destroy(push_gc_t *gc);
+void push_gc_add_interpreter(push_gc_t *gc, push_t *push);
+void push_gc_remove_interpreter(push_gc_t *gc, push_t *push);
+void push_gc_add_val(push_gc_t *gc, push_val_t *val, push_bool_t recursive);
+void push_gc_remove_val(push_gc_t *gc, push_val_t *val, push_bool_t recursive);
+push_gc_t *push_gc_global(void);
 
 #endif /* _PUSH_GC_H_ */
 

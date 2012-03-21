@@ -85,14 +85,11 @@ struct push_S {
   GStaticMutex mutex;
 
   /* garbage collector */
-  struct {
-    int generation;
-    GList *values;
-  } gc;
+  push_gc_t *gc;
 };
 
 
-push_t *push_new_full(push_bool_t default_instructions, push_bool_t default_config, push_interrupt_handler_t interrupt_handler, push_step_hook_t step_hook);
+push_t *push_new_full(push_bool_t default_instructions, push_bool_t default_config, push_gc_t *gc, push_interrupt_handler_t interrupt_handler, push_step_hook_t step_hook);
 push_t *push_new(void);
 void push_destroy(push_t *push);
 push_t *push_copy(push_t *push);

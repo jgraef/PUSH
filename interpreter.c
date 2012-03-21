@@ -26,28 +26,20 @@
 
 
 
-push_t *push_new_full(push_bool_t default_instructions, push_bool_t default_config, push_interrupt_handler_t interrupt_handler, push_step_hook_t step_hook) {
+push_t *push_new_full(push_bool_t default_instructions, push_bool_t default_config, push_gc_t *gc, push_interrupt_handler_t interrupt_handler, push_step_hook_t step_hook) {
   push_t *push;
 
   push = g_slice_new(push_t);
 
-  /* set interrupt handler */
-  push->interrupt_handler = interrupt_handler;
-
-  /* set step hook */
-  push->step_hook = step_hook;
-
-  /* initialize garbage collection */
-  push_gc_init(push);
-
-  /* initialize execution mutex */
+  /* create mutex & lock it */
   g_static_mutex_init(&push->mutex);
+  g_static_mutex_lock(&push->mutex);
 
-  /* initialize random number generator */
+  push->interrupt_handler = interrupt_handler;
+  push->step_hook = step_hook;
   push->rand = g_rand_new();
-
-  /* initialize storage for interned strings */
   push->names = g_string_chunk_new(PUSH_NAME_STORAGE_BLOCK_SIZE);
+  push->gc = gc == NULL ? push_gc_global() : gc;
 
   /* create hash tables */
   push->config = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
@@ -61,6 +53,9 @@ push_t *push_new_full(push_bool_t default_instructions, push_bool_t default_conf
   push->integer = push_stack_new();
   push->name = push_stack_new();
   push->real = push_stack_new();
+
+  /* add interpreter to garbage collector */
+  push_gc_add_interpreter(push->gc, push);
 
   if (default_config) {
     /* default configuration */
@@ -81,21 +76,23 @@ push_t *push_new_full(push_bool_t default_instructions, push_bool_t default_conf
     push_add_dis(push);
   }
 
+  g_static_mutex_unlock(&push->mutex);
+
   return push;
 }
 
 
 push_t *push_new(void) {
-  return push_new_full(TRUE, TRUE, NULL, NULL);
+  return push_new_full(TRUE, TRUE, NULL, NULL, NULL);
 }
 
 
 void push_destroy(push_t *push) {
   g_return_if_null(push);
-  g_return_if_fail(g_static_mutex_trylock(&push->mutex));
 
-  /* destroy GC and all values tracked by it */
-  push_gc_destroy(push);
+  /* unlink from GC & lock */
+  push_gc_remove_interpreter(push->gc, push);
+  g_static_mutex_lock(&push->mutex);
 
   /* destroy stacks */
   push_stack_destroy(push->boolean);
@@ -124,13 +121,14 @@ void push_destroy(push_t *push) {
 
 
 push_t *push_copy(push_t *push) {
+  // NOTE: deprecated, also not thread-safe!
   push_t *new_push;
   GHashTableIter iter;
   const char *key;
   push_val_t *val;
   push_instr_t *instr;
 
-  new_push = push_new_full(FALSE, FALSE, push->interrupt_handler, push->step_hook);
+  new_push = push_new_full(FALSE, FALSE, push->gc, push->interrupt_handler, push->step_hook);
 
   /* copy configuration */
   g_hash_table_iter_init(&iter, push->config);
@@ -173,9 +171,6 @@ void push_flush(push_t *push) {
 
   /* remove all bindings */
   g_hash_table_remove_all(push->bindings);
-
-  /* since we unreferenced all values, call the garbage collector to free them */
-  push_gc_collect(push);
 }
 
 
@@ -321,8 +316,6 @@ push_int_t push_run(push_t *push, push_int_t max_steps) {
   else {
     for (i = 0; push_step(push); i++);
   }
-
-  push_gc_collect(push);
 
   g_static_mutex_unlock(&push->mutex);
 

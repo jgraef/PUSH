@@ -73,7 +73,7 @@ push_val_t *push_val_new(push_t *push, int type, ...) {
 
   /* add to garbage collection */
   if (push != NULL) {
-    push_gc_track(push, val, FALSE);
+    push_gc_add_val(push->gc, val, FALSE);
   }
 
   return val;
@@ -97,6 +97,10 @@ push_val_t *push_val_copy(push_val_t *val, push_t *to_push) {
     }
 
     new_val->code = new_code;
+  }
+  else if (push_check_instr(val)) {
+    new_val->instr = push_instr_lookup(to_push, val->instr->name);
+    g_return_val_if_null(new_val->instr, NULL);
   }
   else {
     new_val->_value = val->_value;

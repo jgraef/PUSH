@@ -31,6 +31,8 @@ typedef struct push_val_S push_val_t;
 #include "push/interpreter.h"
 #include "push/instr.h"
 #include "push/code.h"
+#include "push/gc.h"
+
 
 
 #define push_check_none(v)            ((v)->type == PUSH_TYPE_NONE)
@@ -73,7 +75,7 @@ struct push_val_S {
   };
 
   /* garbage collector */
-  int gc;
+  push_gc_val_t gc;
 };
 
 
